@@ -417,6 +417,24 @@ button,a,.chip,.tab,.nv{-webkit-tap-highlight-color:rgba(59,130,246,.28);touch-a
 .slot{border:1px dashed var(--line);border-radius:var(--r);display:grid;place-items:center;padding:28px 16px;text-align:center;color:var(--txt-3);min-height:180px}
 .thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none;border:1px solid var(--line)}
 
+/* importador de extrato */
+.imp-drop{border:1px dashed var(--line-2);border-radius:14px;padding:26px 18px;text-align:center;
+  background:rgba(37,99,235,.06);cursor:pointer;transition:.2s}
+.imp-drop:hover{background:rgba(37,99,235,.12)}
+.imp-drop b{display:block;font-family:var(--display);font-size:.92rem;color:var(--white);margin-bottom:5px}
+.imp-drop small{font-size:.76rem;color:var(--txt-3)}
+.imp-map{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.imp-map label{font-size:.72rem;color:var(--txt-3);display:block;margin-bottom:5px}
+.imp-map select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);
+  background:rgba(22,22,22,.8);color:var(--white);font:inherit;font-size:.8rem}
+.imp-prev{margin-top:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.imp-prev table{width:100%;border-collapse:collapse;font-size:.76rem}
+.imp-prev th{text-align:left;padding:9px 11px;color:var(--txt-3);font-weight:600;background:rgba(22,22,22,.7)}
+.imp-prev td{padding:9px 11px;border-top:1px solid var(--line);color:var(--txt-2)}
+.imp-res{margin-top:12px;font-size:.8rem;color:var(--txt-2)}
+.imp-res b{color:var(--blue-hi)}
+@media(max-width:640px){.imp-map{grid-template-columns:1fr}}
+
 /* ganchos virais */
 .gan-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .gan-tab{padding:9px 16px;border-radius:99px;border:1px solid var(--line);background:rgba(22,22,22,.6);
@@ -977,6 +995,21 @@ html{overflow-x:hidden}
         <p class="auth-alt" style="margin-top:6px">Ainda não comprou? <button onclick="go('site');jump('#planos')">Ver planos</button></p>
       </div>
 
+      <div class="card auth-card hide" id="newpassCard">
+        <h3 style="font-size:1.05rem;margin-bottom:6px">Criar sua senha</h3>
+        <p class="dim" style="margin-bottom:16px">Escolha a senha que você vai usar para entrar na plataforma.</p>
+        <div class="field">
+          <label for="np1">Nova senha</label>
+          <input class="input" id="np1" type="password" placeholder="mínimo de 8 caracteres" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label for="np2">Repita a senha</label>
+          <input class="input" id="np2" type="password" placeholder="digite de novo" autocomplete="new-password">
+        </div>
+        <p class="auth-err hide" id="npErr"></p>
+        <button class="btn btn-primary btn-block" onclick="salvarSenha()">Salvar senha e entrar</button>
+      </div>
+
       <div class="card auth-card hide" id="recoverCard">
         <h3 style="font-size:1.05rem;margin-bottom:6px">Recuperar acesso</h3>
         <p class="dim" style="margin-bottom:16px">Digite o e-mail usado na compra. Enviamos um link de recuperação para ele.</p>
@@ -1318,22 +1351,59 @@ function buildSite(){
 function setDemo(i){document.querySelectorAll('#demoTabs .tab').forEach((t,j)=>t.classList.toggle('on',i===j));
   $('#demoStage').innerHTML=DEMOS[i].b();}
 
+/* Links de checkout da Cakto — troque aqui se mudar de oferta */
+const CHECKOUT={
+  Starter:'https://pay.cakto.com.br/krdqbj3_1044875',
+  Pro:'https://pay.cakto.com.br/6ea762w',
+  Lifetime:'https://pay.cakto.com.br/6fuypkw'
+};
 function buy(plan){
-  const price={Starter:'R$ 97/mês',Pro:'R$ 197/mês',Lifetime:'R$ 297 (pagamento único)'}[plan];
-  openModal(`<div class="modal-head"><div><h3>Plano ${plan}</h3><p class="dim">${price}</p></div>
-    <button class="icon-btn" onclick="closeModal()">${ico('x')}</button></div>
-    <div class="pad">
-      <p class="muted" style="font-size:.92rem">Nesta versão de demonstração o checkout ainda não está ligado ao gateway de pagamento. No fluxo final, ao aprovar o pagamento a plataforma gera uma chave única, envia para o e-mail da compra e libera o login.</p>
-      <div class="card pad" style="margin:16px 0">
-        <div class="row" style="gap:10px">${ico('lock',18)}<b style="font-size:.9rem">Como o acesso é entregue</b></div>
-        <ol class="muted" style="font-size:.88rem;margin:10px 0 0;padding-left:18px;line-height:1.9">
-          <li>Pagamento aprovado</li><li>Chave única gerada</li><li>E-mail com chave e link de entrada</li><li>Login com e-mail da compra + chave</li></ol>
-      </div>
-      <button class="btn btn-primary btn-block" onclick="closeModal();go('auth')">Ir para a tela de acesso</button>
-    </div>`);
+  const url=CHECKOUT[plan];
+  if(url){window.open(url,'_blank','noopener');return;}
+  go('auth');
 }
 
+
 /* =============== ACESSO =============== */
+/* o link do e-mail volta para o site com o token no endereço */
+let NEWPASS_TOKEN=null;
+function checarLinkDeSenha(){
+  const hash=location.hash||'';
+  if(hash.indexOf('access_token')<0)return false;
+  const p=new URLSearchParams(hash.replace(/^#/,''));
+  const tipo=p.get('type')||'';
+  if(['recovery','invite','signup','magiclink'].indexOf(tipo)<0)return false;
+  NEWPASS_TOKEN=p.get('access_token');
+  if(!NEWPASS_TOKEN)return false;
+  history.replaceState(null,'',location.pathname+location.search);
+  go('auth');
+  $('#loginCard').classList.add('hide');
+  $('#recoverCard').classList.add('hide');
+  $('#newpassCard').classList.remove('hide');
+  return true;
+}
+async function salvarSenha(){
+  const a=$('#np1').value, b=$('#np2').value, err=$('#npErr');
+  const falha=m=>{err.textContent=m;err.classList.remove('hide');};
+  err.classList.add('hide');
+  if(a.length<8)  return falha('A senha precisa ter pelo menos 8 caracteres.');
+  if(a!==b)       return falha('As duas senhas não são iguais.');
+  try{
+    const r=await fetch(SB.url+'/auth/v1/user',{method:'PUT',
+      headers:{'apikey':SB.key,'Authorization':'Bearer '+NEWPASS_TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({password:a})});
+    if(!r.ok)throw new Error(await r.text());
+    const u=await r.json();
+    NEWPASS_TOKEN=null;
+    $('#newpassCard').classList.add('hide');
+    $('#loginCard').classList.remove('hide');
+    if(u&&u.email)$('#authMail').value=u.email;
+    $('#authKey').value='';
+    toast('Senha criada. Agora é só entrar.');
+  }catch(e){
+    falha('O link expirou ou já foi usado. Peça um novo em "Esqueci minha senha".');
+  }
+}
 function showRecover(on){$('#loginCard').classList.toggle('hide',on);$('#recoverCard').classList.toggle('hide',!on);}
 async function login(){
   const mail=$('#authMail').value.trim(),key=$('#authKey').value.trim(),err=$('#authErr'),btn=$('#loginBtn');
@@ -2191,7 +2261,7 @@ VIEWS.dashboard={title:'Dashboard',sub:'Seus números de hoje',html(){
 
  <div class="grid-2" style="margin-top:16px;align-items:start">
    <div class="card panel" style="margin:0">
-     <div class="panel-head"><h3>Histórico de vendas</h3><button class="chip" onclick="toast('Exportação disponível na versão conectada')">${ico('dl',15)} Exportar</button></div>
+     <div class="panel-head"><h3>Histórico de vendas</h3><button class="chip" onclick="openImport()">${ico('up',15)} Importar extrato</button><button class="chip" onclick="toast('Exportação disponível na versão conectada')">${ico('dl',15)} Exportar</button></div>
      <div class="panel-body scroll-x" style="padding-top:8px">
        <table class="data"><thead><tr><th>Produto</th><th>Data</th><th>Status</th><th>Comissão</th></tr></thead><tbody>
        ${(S.vendas&&S.vendas.length
@@ -3739,6 +3809,129 @@ function copyMove(i){
  }else copy(p,'Movimento');
 }
 
+/* ---------- IMPORTAR EXTRATO DO TIKTOK SHOP ---------- */
+let IMP={linhas:[],cab:[]};
+function openImport(){
+ IMP={linhas:[],cab:[]};
+ openModal(`<div class="modal-head"><div><h3>Importar extrato</h3>
+   <p class="dim">Baixe o relatório de pedidos no TikTok Shop e envie o arquivo CSV aqui</p></div>
+   <button class="icon-btn" onclick="closeModal()">${ico('x')}</button></div>
+  <div class="pad">
+    <div class="imp-drop" onclick="$('#impFile').click()">
+      ${ico('up',26)}<b>Escolher arquivo CSV</b>
+      <small>O arquivo fica no seu navegador; só os dados de venda vão para a sua conta</small>
+    </div>
+    <input type="file" id="impFile" accept=".csv,text/csv" style="display:none" onchange="lerCSV(this)">
+    <div id="impArea"></div>
+  </div>`);
+}
+/* parser de CSV que respeita aspas e detecta , ou ; */
+function parseCSV(txt){
+ txt=txt.replace(/^\uFEFF/,'');
+ const sep=(txt.split('\n')[0].split(';').length>txt.split('\n')[0].split(',').length)?';':',';
+ const linhas=[];let campo='',linha=[],aspas=false;
+ for(let i=0;i<txt.length;i++){
+   const c=txt[i];
+   if(aspas){ if(c==='"'&&txt[i+1]==='"'){campo+='"';i++;} else if(c==='"'){aspas=false;} else campo+=c; }
+   else if(c==='"')aspas=true;
+   else if(c===sep){linha.push(campo);campo='';}
+   else if(c==='\n'){linha.push(campo);linhas.push(linha);linha=[];campo='';}
+   else if(c!=='\r')campo+=c;
+ }
+ if(campo||linha.length){linha.push(campo);linhas.push(linha);}
+ return linhas.filter(l=>l.some(x=>String(x).trim()!==''));
+}
+function lerCSV(input){
+ const f=input.files&&input.files[0];if(!f)return;
+ const fr=new FileReader();
+ fr.onload=()=>{
+   try{
+     const tudo=parseCSV(fr.result);
+     if(tudo.length<2){toast('Arquivo sem linhas de venda');return;}
+     IMP.cab=tudo[0].map(x=>String(x).trim());
+     IMP.linhas=tudo.slice(1);
+     montarMapa();
+   }catch(e){toast('Não consegui ler esse arquivo');}
+ };
+ fr.readAsText(f,'utf-8');
+}
+/* tenta adivinhar a coluna pelo nome do cabecalho */
+function acharCol(chaves){
+ for(let i=0;i<IMP.cab.length;i++){
+   const c=IMP.cab[i].toLowerCase();
+   if(chaves.some(k=>c.includes(k)))return i;
+ }
+ return -1;
+}
+function montarMapa(){
+ const op=(sel)=>IMP.cab.map((c,i)=>`<option value="${i}"${i===sel?' selected':''}>${c||('Coluna '+(i+1))}</option>`).join('');
+ $('#impArea').innerHTML=`
+  <div class="imp-map">
+    <div><label>Produto</label><select id="colProd">${op(acharCol(['produto','product','item']))}</select></div>
+    <div><label>Data</label><select id="colData">${op(acharCol(['data','date','criado','created']))}</select></div>
+    <div><label>Comissão</label><select id="colCom">${op(acharCol(['comiss','commission']))}</select></div>
+    <div><label>Valor da venda (GMV)</label><select id="colGmv">${op(acharCol(['gmv','total','valor','price','preço','preco']))}</select></div>
+  </div>
+  <div class="imp-res">Encontrei <b>${IMP.linhas.length}</b> linhas no arquivo. Confira as colunas acima e veja a prévia.</div>
+  <button class="btn btn-ghost btn-block" style="margin-top:12px" onclick="previa()">${ico('search',15)} Ver prévia</button>
+  <div id="impPrev"></div>`;
+ paintIcons($('#impArea'));
+ previa();
+}
+function numBR(v){
+ if(v==null)return 0;
+ let s=String(v).replace(/[^0-9,.-]/g,'');
+ if(s.indexOf(',')>-1&&s.indexOf('.')>-1)s=s.replace(/\./g,'').replace(',','.');
+ else if(s.indexOf(',')>-1)s=s.replace(',','.');
+ const n=parseFloat(s);
+ return isNaN(n)?0:n;
+}
+function dataISO(v){
+ const s=String(v).trim();
+ let m=s.match(/(\d{4})-(\d{2})-(\d{2})/);           if(m)return m[0];
+ m=s.match(/(\d{2})\/(\d{2})\/(\d{4})/);            if(m)return m[3]+'-'+m[2]+'-'+m[1];
+ const d=new Date(s);
+ return isNaN(d)?new Date().toISOString().slice(0,10):d.toISOString().slice(0,10);
+}
+function lerMapa(){
+ const g=id=>+$('#'+id).value;
+ return IMP.linhas.map(l=>({
+   product_name:String(l[g('colProd')]||'Produto').slice(0,120),
+   sale_date:dataISO(l[g('colData')]),
+   commission:numBR(l[g('colCom')]),
+   gmv:numBR(l[g('colGmv')])
+ })).filter(v=>v.commission>0||v.gmv>0);
+}
+function previa(){
+ const v=lerMapa();
+ const tot=v.reduce((a,x)=>a+x.commission,0), gmv=v.reduce((a,x)=>a+x.gmv,0);
+ $('#impPrev').innerHTML=`
+  <div class="imp-prev"><table>
+    <thead><tr><th>Produto</th><th>Data</th><th>GMV</th><th>Comissão</th></tr></thead>
+    <tbody>${v.slice(0,5).map(x=>`<tr><td>${x.product_name}</td>
+      <td>${x.sale_date.split('-').reverse().slice(0,2).join('/')}</td>
+      <td>${brl(x.gmv)}</td><td><b>${brl(x.commission)}</b></td></tr>`).join('')||'<tr><td colspan="4">Nenhuma linha com valor. Revise as colunas.</td></tr>'}</tbody>
+  </table></div>
+  <div class="imp-res"><b>${v.length}</b> vendas · GMV <b>${brl(gmv)}</b> · comissão <b>${brl(tot)}</b></div>
+  ${v.length?`<button class="btn btn-primary btn-block" style="margin-top:12px" onclick="salvarImport()">${ico('check',15)} Importar ${v.length} vendas</button>`:''}`;
+ paintIcons($('#impPrev'));
+}
+async function salvarImport(){
+ const v=lerMapa();
+ if(!v.length)return;
+ if(SB.demo||!SB.uid){toast('Entre com a sua conta para salvar as vendas');return;}
+ try{
+   const rows=v.map(x=>Object.assign({user_id:SB.uid,status:'approved'},x));
+   for(let i=0;i<rows.length;i+=200){
+     await SB.insert('sales',rows.slice(i,i+200));
+   }
+   closeModal();
+   toast(v.length+' vendas importadas');
+   await carregarDados();
+   nav('dashboard');
+ }catch(e){toast('Não consegui salvar: '+String(e.message||e).slice(0,60));}
+}
+
 /* ---------- GANCHOS VIRAIS ---------- */
 /* Cadastro manual: fmt aceita 'POV' ou 'UGC'. nicho e obs sao opcionais. */
 const GANCHOS=[
@@ -4006,6 +4199,8 @@ buildSite();
    const on=m.classList.toggle('on');nb.setAttribute('aria-expanded',on?'true':'false');});}
 paintIcons(document.getElementById('screen-site'));
 paintIcons(document.getElementById('screen-auth'));
+checkLinkSenhaBoot();
+function checkLinkSenhaBoot(){try{checarLinkDeSenha();}catch(e){}}
 </script>
 
 </body>
