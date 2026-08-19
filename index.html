@@ -994,7 +994,28 @@ html{overflow-x:hidden}
         <p id="authErr" class="hide" style="color:#f8a3a3;font-size:.82rem;margin-bottom:12px"></p>
         <button class="btn btn-primary btn-block" id="loginBtn" onclick="login()">Entrar</button>
         <p class="auth-alt">Perdeu a chave? <button onclick="showRecover(true)">Recuperar acesso</button></p>
+        <p class="auth-alt" style="margin-top:6px">Primeira vez aqui? <button onclick="showClaim(true)">Criar meu acesso</button></p>
         <p class="auth-alt" style="margin-top:6px">Ainda não comprou? <button onclick="go('site');jump('#planos')">Ver planos</button></p>
+      </div>
+
+      <div class="card auth-card hide" id="claimCard">
+        <h3 style="font-size:1.05rem;margin-bottom:6px">Criar meu acesso</h3>
+        <p class="dim" style="margin-bottom:16px">Use o mesmo e-mail que você informou na compra e escolha a sua senha.</p>
+        <div class="field">
+          <label for="clMail">E-mail da compra</label>
+          <input class="input" id="clMail" type="email" placeholder="voce@email.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="clP1">Crie uma senha</label>
+          <input class="input" id="clP1" type="password" placeholder="mínimo de 8 caracteres" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label for="clP2">Repita a senha</label>
+          <input class="input" id="clP2" type="password" placeholder="digite de novo" autocomplete="new-password">
+        </div>
+        <p class="auth-err hide" id="clErr"></p>
+        <button class="btn btn-primary btn-block" id="clBtn" onclick="criarAcesso()">Criar acesso e entrar</button>
+        <p class="auth-alt"><button onclick="showClaim(false)">Já tenho senha, quero entrar</button></p>
       </div>
 
       <div class="card auth-card hide" id="newpassCard">
@@ -1014,7 +1035,7 @@ html{overflow-x:hidden}
 
       <div class="card auth-card hide" id="recoverCard">
         <h3 style="font-size:1.05rem;margin-bottom:6px">Recuperar acesso</h3>
-        <p class="dim" style="margin-bottom:16px">Digite o e-mail usado na compra. Enviamos um link de recuperação para ele.</p>
+        <p class="dim" style="margin-bottom:16px">Esqueceu a senha? Fale com o suporte pelo e-mail promptverseoficial@gmail.com informando o e-mail da compra.</p>
         <div class="field">
           <label for="recMail">E-mail da compra</label>
           <input class="input" id="recMail" type="email" placeholder="voce@email.com">
@@ -1405,6 +1426,33 @@ async function salvarSenha(){
   }catch(e){
     falha('O link expirou ou já foi usado. Peça um novo em "Esqueci minha senha".');
   }
+}
+function showClaim(on){
+  $('#loginCard').classList.toggle('hide',on);
+  $('#recoverCard').classList.add('hide');
+  $('#newpassCard').classList.add('hide');
+  $('#claimCard').classList.toggle('hide',!on);
+}
+async function criarAcesso(){
+  const mail=$('#clMail').value.trim(), a=$('#clP1').value, b=$('#clP2').value;
+  const err=$('#clErr'), btn=$('#clBtn');
+  const falha=m=>{err.textContent=m;err.classList.remove('hide');btn.disabled=false;btn.textContent='Criar acesso e entrar';};
+  err.classList.add('hide');
+  if(!mail||mail.indexOf('@')<0) return falha('Informe o e-mail usado na compra.');
+  if(a.length<8)                 return falha('A senha precisa ter pelo menos 8 caracteres.');
+  if(a!==b)                      return falha('As duas senhas não são iguais.');
+  btn.disabled=true;btn.textContent='Criando...';
+  try{
+    const r=await fetch(SB.url+'/functions/v1/criar-acesso',{method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB.key},
+      body:JSON.stringify({email:mail,senha:a})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok) return falha(j.erro||'Não consegui criar o acesso agora.');
+    $('#authMail').value=mail; $('#authKey').value=a;
+    showClaim(false);
+    toast('Acesso criado. Entrando...');
+    login();
+  }catch(e){ falha('Falha de conexão. Tente de novo.'); }
 }
 function showRecover(on){$('#loginCard').classList.toggle('hide',on);$('#recoverCard').classList.toggle('hide',!on);}
 async function login(){
