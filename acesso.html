@@ -746,7 +746,7 @@ html{overflow-x:hidden}
   </symbol>
 </svg>
 <!-- ==================== SITE ==================== -->
-<div class="screen on" id="screen-site">
+<div class="screen" id="screen-site">
   <nav class="nav" id="nav">
     <div class="wrap nav-in">
       <a href="#" class="logo-lockup" onclick="go('site');return false">
@@ -760,7 +760,7 @@ html{overflow-x:hidden}
         <a href="#faq">Dúvidas</a>
       </div>
       <div class="nav-cta">
-        <button class="btn btn-ghost btn-sm" onclick="irAcesso()">Entrar</button>
+        <button class="btn btn-ghost btn-sm" onclick="go('auth')">Entrar</button>
         <button class="btn btn-primary btn-sm" onclick="jump('#planos')">Começar agora</button>
         <button class="nav-burger" id="navBurger" aria-label="Abrir menu" aria-expanded="false"><i data-ic="menu"></i></button>
       </div>
@@ -770,7 +770,7 @@ html{overflow-x:hidden}
       <a href="#demo" onclick="closeNavMob()">Demonstração</a>
       <a href="#planos" onclick="closeNavMob()">Planos</a>
       <a href="#faq" onclick="closeNavMob()">Dúvidas</a>
-      <button onclick="closeNavMob();irAcesso()">Entrar com minha chave</button>
+      <button onclick="closeNavMob();go('auth')">Entrar com minha chave</button>
       <button class="btn btn-primary btn-block" onclick="closeNavMob();jump('#planos')">Começar agora</button>
     </div>
   </nav>
@@ -1000,7 +1000,7 @@ html{overflow-x:hidden}
         <p class="lead" style="max-width:520px;margin:14px auto 26px">Crie o modelo, pegue o roteiro e publique hoje. A chave de acesso chega no seu e-mail assim que a compra é aprovada.</p>
         <button class="btn btn-primary" onclick="buy('Lifetime')">Quero o acesso vitalício — R$ 297</button>
         <p class="dim" style="margin-top:12px">Ou 12x de R$ 24,75 no cartão</p>
-        <p class="dim" style="margin-top:14px">Ou <button style="color:var(--blue-hi);font-weight:600" onclick="irAcesso()">entrar com minha chave</button></p>
+        <p class="dim" style="margin-top:14px">Ou <button style="color:var(--blue-hi);font-weight:600" onclick="go('auth')">entrar com minha chave</button></p>
       </div>
     </div>
   </section>
@@ -1016,7 +1016,7 @@ html{overflow-x:hidden}
 </div>
 
 <!-- ==================== ACESSO ==================== -->
-<div class="screen" id="screen-auth">
+<div class="screen on" id="screen-auth">
   <div class="auth">
     <div class="wrap" style="max-width:460px">
       <div style="text-align:center;margin-bottom:22px">
@@ -1425,7 +1425,7 @@ const CHECKOUT={
 function buy(plan){
   const url=CHECKOUT[plan];
   if(url){window.open(url,'_blank','noopener');return;}
-  irAcesso();
+  go('auth');
 }
 
 
@@ -1441,7 +1441,7 @@ function checarLinkDeSenha(){
   NEWPASS_TOKEN=p.get('access_token');
   if(!NEWPASS_TOKEN)return false;
   history.replaceState(null,'',location.pathname+location.search);
-  irAcesso();
+  go('auth');
   $('#loginCard').classList.add('hide');
   $('#recoverCard').classList.add('hide');
   $('#newpassCard').classList.remove('hide');
@@ -2944,25 +2944,19 @@ buildSite();
 paintIcons(document.getElementById('screen-site'));
 paintIcons(document.getElementById('screen-auth'));
 checkLinkSenhaBoot();
-function irAcesso(){location.href='acesso.html';}
 function checkLinkSenhaBoot(){
   try{ if(checarLinkDeSenha())return; }catch(e){}
-  try{ abrirPorHash(); }catch(e){}
+  try{ abrirAcesso(); }catch(e){}
 }
-/* /#acesso  -> tela de acesso com as boas-vindas
-   /#entrar  -> tela de acesso direto no login */
-function abrirPorHash(){
-  const t=(location.hash||'').replace('#','').toLowerCase();
-  if(t!=='acesso'&&t!=='entrar')return;
-  irAcesso();
-  if(t==='acesso'){
-    $('#authTitle').textContent='Bem-vindo ao PromptVerse 2.0';
-    $('#authSub').textContent='Sua compra foi confirmada. Crie seu acesso com o mesmo e-mail que você usou no pagamento.';
-    showClaim(true);
-    $('#clMail').focus();
-  }
+/* este arquivo é só a área de acesso: abre direto no criar acesso */
+function abrirAcesso(){
+  go('auth');
+  $('#authTitle').textContent='Bem-vindo ao PromptVerse 2.0';
+  $('#authSub').textContent='Sua compra foi confirmada. Crie seu acesso com o mesmo e-mail que você usou no pagamento.';
+  showClaim(true);
 }
-addEventListener('hashchange',()=>{try{abrirPorHash();}catch(e){}});
+
+
 </script>
 
 </body>
