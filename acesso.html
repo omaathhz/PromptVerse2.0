@@ -437,6 +437,17 @@ button,a,.chip,.tab,.nv{-webkit-tap-highlight-color:rgba(59,130,246,.28);touch-a
 .imp-res b{color:var(--blue-hi)}
 @media(max-width:640px){.imp-map{grid-template-columns:1fr}}
 
+/* gerador de imagens */
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.img-item{border-radius:13px;overflow:hidden;border:1px solid var(--line);background:var(--glass)}
+.img-item .ii-stage{aspect-ratio:1/1;background:#0D0D0D;display:grid;place-items:center;position:relative}
+.img-item img{width:100%;height:100%;object-fit:cover;display:block}
+.img-item .ii-body{padding:10px;display:flex;flex-direction:column;gap:6px}
+.img-item p{margin:0;font-size:.72rem;line-height:1.45;color:var(--txt-2);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.img-item small{font-size:.66rem;color:var(--txt-3)}
+@media(max-width:640px){.img-grid{grid-template-columns:repeat(2,1fr)}}
+
 /* centro de apis + gerador de videos */
 .api-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px}
 .api-card{display:flex;flex-direction:column;gap:11px;padding:16px;border-radius:15px;
@@ -2305,6 +2316,7 @@ const NAV=[
  {id:'ganchos',l:'Ganchos virais',ic:'fire'},
  {id:'apis',l:'Centro de APIs',ic:'lock'},
  {id:'gerador',l:'Gerador de vídeos IA',ic:'sparkles'},
+ {id:'imagens',l:'Gerador de imagens IA',ic:'star'},
  {id:'free',l:'Gerar vídeos de graça',ic:'bolt'},
  {id:'assistente',l:'Assistente IA',ic:'message'},
  {g:'Evolução'},
@@ -2582,7 +2594,8 @@ async function salvarImport(){
 const IAS=[
  {id:'gemini', n:'Google Gemini', d:'Veo — cota gratuita no Google AI Studio'},
  {id:'luma',   n:'Luma',          d:'Dream Machine — créditos ao criar a conta'},
- {id:'fal',    n:'fal.ai',        d:'Vários modelos numa chave só — Seedance, Kling, Veo, Grok'}
+ {id:'fal',    n:'fal.ai',        d:'Vários modelos numa chave só — Seedance, Kling, Veo, Grok'},
+ {id:'openai', n:'OpenAI',        d:'GPT Image — só para gerar imagens'}
 ];
 /* modelos disponiveis quando a IA escolhida e o fal.ai */
 const FAL_MODELS=[
@@ -2735,6 +2748,77 @@ async function gerarVideo(){
    carregarVideos();
  }catch(e){ toast(String(e.message).slice(0,80)); }
  btn.disabled=false;btn.innerHTML=ico('sparkles',15)+' GERAR VÍDEO'; paintIcons(btn);
+}
+
+/* ---------- GERADOR DE IMAGENS ---------- */
+const IAS_IMG=[
+ {id:'gemini', n:'Google Gemini'},
+ {id:'openai', n:'OpenAI'},
+ {id:'fal',    n:'fal.ai'}
+];
+VIEWS.imagens={title:'Gerador de imagens IA',sub:'Crie a imagem do produto ou do criativo direto aqui',html(){
+ const m=S.apis||{};
+ const conectadas=IAS_IMG.filter(a=>m[a.id]);
+ return `<div class="gen-wrap">
+  <div class="card pad">
+    <label class="dim" style="font-size:.74rem;display:block;margin-bottom:6px">Prompt</label>
+    <textarea class="gen-txt" id="imgPrompt" placeholder="Descreva a imagem que você quer criar."></textarea>
+    <div class="gen-opts">
+      <div><label>IA</label><select class="gen-sel" id="imgIA">
+        ${conectadas.length?conectadas.map(a=>`<option value="${a.id}">${a.n}</option>`).join('')
+                          :`<option value="">Nenhuma IA conectada</option>`}
+      </select></div>
+      <div><label>Formato</label><select class="gen-sel" id="imgFmt">
+        <option value="1:1">1:1 quadrado</option><option value="9:16">9:16 vertical</option><option value="16:9">16:9 horizontal</option>
+      </select></div>
+      <div style="grid-column:1/-1">
+        <button class="btn btn-primary btn-block" id="imgBtn" onclick="gerarImagem()">${ico('sparkles',15)} GERAR IMAGEM</button>
+      </div>
+    </div>
+    ${conectadas.length?'':`<p class="dim" style="margin-top:12px;font-size:.78rem">Conecte uma chave no <b>Centro de APIs</b> para liberar a geração.</p>`}
+  </div>
+  <div class="card pad">
+    <div class="panel-head" style="padding:0 0 12px"><h3>Minhas imagens</h3></div>
+    <div id="imgHist"><div class="empty"><h4>Nada gerado ainda</h4><p>Suas imagens aparecem aqui.</p></div></div>
+  </div>
+ </div>`;
+},after(){carregarImagens();}};
+
+async function carregarImagens(){
+ const box=$('#imgHist'); if(!box)return;
+ let lista=[];
+ try{ lista=await SB.get('generated_images?select=*&order=created_at.desc&limit=24')||[]; }catch(e){}
+ if(!lista.length){
+   box.innerHTML=`<div class="empty"><h4>Nada gerado ainda</h4><p>Suas imagens aparecem aqui.</p></div>`;
+   return;
+ }
+ box.innerHTML=`<div class="img-grid">${lista.map(v=>`
+   <div class="img-item">
+     <div class="ii-stage">
+       ${v.image_url?`<img src="${v.image_url}" alt="" loading="lazy">`
+                    :`<div class="vi-load">${ico('x',20)}<span>${(v.erro||'Falhou').slice(0,50)}</span></div>`}
+     </div>
+     <div class="ii-body">
+       <p>${(v.prompt||'').slice(0,90)}</p>
+       <small>${new Date(v.created_at).toLocaleDateString('pt-BR')} • ${v.provider}</small>
+       ${v.image_url?`<a class="btn btn-ghost btn-sm btn-block" href="${v.image_url}" target="_blank" rel="noopener" download>${ico('dl',13)} Baixar</a>`:''}
+     </div>
+   </div>`).join('')}</div>`;
+ paintIcons(box);
+}
+async function gerarImagem(){
+ const prompt=$('#imgPrompt').value.trim(), provider=$('#imgIA').value;
+ const formato=$('#imgFmt').value, btn=$('#imgBtn');
+ if(!provider){toast('Conecte uma IA no Centro de APIs');return;}
+ if(prompt.length<5){toast('Escreva um prompt maior');return;}
+ btn.disabled=true;btn.textContent='Gerando...';
+ try{
+   await chamarIA({acao:'gerar_imagem',provider,prompt,formato});
+   $('#imgPrompt').value='';
+   toast('Imagem pronta');
+   carregarImagens();
+ }catch(e){ toast(String(e.message).slice(0,90)); }
+ btn.disabled=false;btn.innerHTML=ico('sparkles',15)+' GERAR IMAGEM'; paintIcons(btn);
 }
 
 /* ---------- GANCHOS VIRAIS ---------- */
