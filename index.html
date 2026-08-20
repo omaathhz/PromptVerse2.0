@@ -1145,8 +1145,7 @@ html{overflow-x:hidden}
         <p class="auth-alt"><button onclick="showRecover(false)">Voltar para o login</button></p>
       </div>
 
-      <p class="dim" style="text-align:center;margin-top:18px;font-size:.78rem">
-        Ainda testando? Qualquer e-mail com a senha <b class="mono">PV2-DEMO</b> abre em modo demonstração.</p>
+      <p class="dim" style="text-align:center;margin-top:18px;font-size:.78rem"></p>
     </div>
   </div>
 </div>
@@ -1203,7 +1202,7 @@ html{overflow-x:hidden}
 const SB={
   url:'https://glpurtkizqbjfqfqwfwh.supabase.co',
   key:'sb_publishable_JqdnWFRj4S20kVZktXWTZw_fNxBXuHD',
-  token:null, uid:null, demo:true,
+  token:null, uid:null, demo:false,
   head(){const x={'apikey':this.key,'Content-Type':'application/json'};
     x['Authorization']='Bearer '+(this.token||this.key);return x;},
   async signIn(email,senha){
@@ -1339,7 +1338,7 @@ const S={
   view:'dashboard', range:'semanal', metric:'seguidores',
   favProducts:new Set(['p2']), favPrompts:new Set(),
   prompts:[], promptHistory:[], savedModels:[], chat:[], busy:false,
-  genImg:null, kpi:null, vendas:null, seguidores:null, notifs:null, licenseKey:null, bonus:[], bonusTotal:29, promptCat:'Prompts para Imagens', toolCat:'Todas', prodCat:'Todos', prodSearch:'', prodPage:1, ganFmt:'Todos'
+  genImg:null, kpi:null, vendas:null, seguidores:null, notifs:null, licenseKey:null, bonus:[], bonusTotal:29, promptCat:'Prompts para Imagens', toolCat:'Todas', prodCat:'Todos', prodSearch:'', prodPage:1, prodPage:1, ganFmt:'Todos', apisCarregadas:false, apis:{}
 };
 
 /* =============== UTILS =============== */
@@ -1571,13 +1570,7 @@ async function login(){
     await carregarDados();
     go('app');mountApp();
   }catch(e){
-    if(key.toUpperCase()==='PV2-DEMO'){
-      SB.demo=true;S.user.email=mail;
-      const first=mail.split('@')[0].replace(/[^a-zA-Z]/g,'')||'Criador';
-      S.user.name=first.charAt(0).toUpperCase()+first.slice(1);
-      S.user.initials=S.user.name.slice(0,2).toUpperCase();
-      go('app');mountApp();toast('Modo demonstração — dados de exemplo');
-    }else{
+    {
       const semRede = (e && (e.name==='TypeError' || /fetch|network|Load failed/i.test(e.message||'')));
       err.textContent = semRede
         ? 'Não consegui falar com o servidor. Se você está vendo isso na pré-visualização do Claude, baixe o arquivo e abra direto no navegador — aqui dentro a conexão externa fica bloqueada.'
@@ -2627,7 +2620,11 @@ VIEWS.apis={title:'Centro de APIs',sub:'Conecte suas próprias chaves de IA para
           <button class="btn btn-primary btn-block" onclick="salvarApi('${a.id}')">${ico('lock',14)} CONECTAR</button>`}
    </div>`;}).join('')}</div>
  <p class="dim" style="margin-top:16px;font-size:.78rem">Sua chave é guardada criptografada e nunca aparece inteira na tela. O consumo de cada IA é cobrado direto na conta que você conectar.</p>`;
-},after(){carregarApis().then(()=>{ if(S.view==='apis')nav('apis'); });}};
+},after(){
+  /* carrega uma vez só: redesenhar em laço apagava o campo enquanto o usuário digitava */
+  if(S.apisCarregadas)return;
+  carregarApis().then(()=>{ S.apisCarregadas=true; if(S.view==='apis')nav('apis'); });
+}};
 async function salvarApi(p){
  const el=$('#k_'+p); if(!el)return;
  const chave=el.value.trim();
@@ -2635,12 +2632,12 @@ async function salvarApi(p){
  try{
    await chamarIA({acao:'salvar_chave',provider:p,chave});
    el.value='';
-   await carregarApis(); nav('apis');
+   await carregarApis(); S.apisCarregadas=true; nav('apis');
    toast('Chave conectada com sucesso.');
  }catch(e){ toast(String(e.message).slice(0,70)); }
 }
 async function removerApi(p){
- try{ await chamarIA({acao:'remover_chave',provider:p}); await carregarApis(); nav('apis'); toast('Chave removida'); }
+ try{ await chamarIA({acao:'remover_chave',provider:p}); await carregarApis(); S.apisCarregadas=true; nav('apis'); toast('Chave removida'); }
  catch(e){ toast('Não consegui remover agora'); }
 }
 
@@ -3075,6 +3072,7 @@ const LIBVID=[
   prompt:`A woman stands in front of a mirror recording herself with her smartphone. She slowly shifts her weight from one leg to the other, gently adjusts her hair, smiles naturally, slightly turns her body, looks at her reflection, and finishes with a confident pose. Ultra realistic, photorealistic, vertical 9:16.`,
   passos:['Gere a modelo','Cole o prompt','Gere o vídeo']}
 ];
+
 VIEWS.prompts={title:'Biblioteca de prompts',sub:'Prompts prontos com o passo a passo de uso',html(){
  return `<div class="lib-grid">${LIB.map((c,i)=>`
   <div class="lib-card" onclick="openLib(${i})" role="button" tabindex="0">
@@ -3108,10 +3106,38 @@ VIEWS.prompts={title:'Biblioteca de prompts',sub:'Prompts prontos com o passo a 
     </div>
   </div>`).join('')}</div>`;
 },after(){libVidHover();}};
+function copyLib(i){
+ const p=LIB[i].prompt;
+ if(navigator.clipboard&&window.isSecureContext){
+   navigator.clipboard.writeText(p).then(()=>toast('Prompt copiado com sucesso.')).catch(()=>copy(p,'Prompt'));
+ }else copy(p,'Prompt');
+}
+function openLib(i){
+ const c=LIB[i];
+ openModal(`<div class="modal-head"><div><h3>${c.titulo}</h3><p class="dim">${c.desc}</p></div>
+   <button class="icon-btn" onclick="closeModal()">${ico('x')}</button></div>
+   <div class="pad">
+     ${c.img?`<div class="lib-modal-img"><img src="${c.img}" alt="${c.titulo}"></div>`:''}
+     <div class="lib-steps" style="border-top:0;padding-top:0">
+       <b class="lib-steps-t">Passo a passo</b>
+       ${c.passos.map((p,n)=>`<div class="lib-step"><span class="num">${n+1}</span><span>${p}</span></div>`).join('')}
+     </div>
+     <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="copyLib(${i})">${ico('copy',15)} COPIAR PROMPT</button>
+   </div>`);
+}
+/* prompts em video: hover no computador, play no celular */
 function libVidSrc(i){
  const c=LIBVID[i];
  if(VIDEO_BASE)return VIDEO_BASE+'/lv'+(i+1)+'.mp4';
- return c.video||'';
+ if(!c.video)return '';
+ if(c._b)return c._b;
+ if(c.video.indexOf('data:')!==0){c._b=c.video;return c._b;}
+ try{
+  const bin=atob(c.video.split(',')[1]),arr=new Uint8Array(bin.length);
+  for(let k=0;k<bin.length;k++)arr[k]=bin.charCodeAt(k);
+  c._b=URL.createObjectURL(new Blob([arr],{type:'video/mp4'}));
+ }catch(e){c._b=c.video;}
+ return c._b;
 }
 function armLibVid(v,i){
  if(!v.getAttribute('src')){v.muted=true;v.setAttribute('src',libVidSrc(i));v.load();}
@@ -3138,25 +3164,6 @@ function toggleVidSteps(i,btn){
 }
 function copyLibVid(i){
  const p=LIBVID[i].prompt;
- if(navigator.clipboard&&window.isSecureContext){
-   navigator.clipboard.writeText(p).then(()=>toast('Prompt copiado com sucesso.')).catch(()=>copy(p,'Prompt'));
- }else copy(p,'Prompt');
-}
-function openLib(i){
- const c=LIB[i];
- openModal(`<div class="modal-head"><div><h3>${c.titulo}</h3><p class="dim">${c.desc}</p></div>
-   <button class="icon-btn" onclick="closeModal()">${ico('x')}</button></div>
-   <div class="pad">
-     ${c.img?`<div class="lib-modal-img"><img src="${c.img}" alt=""></div>`:''}
-     <div class="lib-steps" style="border-top:0;padding-top:0">
-       <b class="lib-steps-t">Passo a passo</b>
-       ${c.passos.map((p,n)=>`<div class="lib-step"><span class="num">${n+1}</span><span>${p}</span></div>`).join('')}
-     </div>
-     <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="copyLib(${i})">${ico('copy',15)} COPIAR PROMPT</button>
-   </div>`);
-}
-function copyLib(i){
- const p=LIB[i].prompt;
  if(navigator.clipboard&&window.isSecureContext){
    navigator.clipboard.writeText(p).then(()=>toast('Prompt copiado com sucesso.')).catch(()=>copy(p,'Prompt'));
  }else copy(p,'Prompt');
@@ -3261,21 +3268,23 @@ VIEWS.produtos={title:'Central de produtos virais',sub:'Copy, ângulos e CTA pro
  return `<div class="card panel" style="margin:0">
    <div class="panel-head">
      <div style="position:relative;flex:1;max-width:340px">
-       <input class="input" style="padding-left:38px" placeholder="Buscar produto" value="${S.prodSearch}" oninput="S.prodSearch=this.value;renderProds()">
+       <input class="input" style="padding-left:38px" placeholder="Buscar produto" value="${S.prodSearch}" oninput="S.prodSearch=this.value;S.prodPage=1;renderProds()">
        <span style="position:absolute;left:12px;top:11px;color:var(--txt-3)">${ico('search',16)}</span>
      </div>
      <span class="badge badge-soft">${S.favProducts.size} salvo(s)</span>
    </div>
    <div class="panel-body">
-     <div class="chiprow" style="margin-bottom:16px">${cats.map(c=>`<button class="chip ${c===S.prodCat?'on':''}" onclick="S.prodCat='${c}';nav('produtos')">${c}</button>`).join('')}</div>
+     <div class="chiprow" style="margin-bottom:16px">${cats.map(c=>`<button class="chip ${c===S.prodCat?'on':''}" onclick="S.prodCat='${c}';S.prodPage=1;nav('produtos')">${c}</button>`).join('')}</div>
      <div id="prodGrid">${prodGridHTML(list)}</div>
    </div>
  </div>`;
 }};
+const PROD_PAGE=12;
 function prodGridHTML(list){
  if(!list.length)return `<div class="empty"><h4>Nenhum produto com esse nome</h4><p>Tente outra palavra ou volte para "Todos".</p></div>`;
- return `<div class="cards">${list.map(p=>`<div class="card pad">
-   <div class="prod-img"><img src="${p.img}" alt="${p.n}" loading="lazy">
+ const vis=list.slice(0,S.prodPage*PROD_PAGE),resto=list.length-vis.length;
+ return `<div class="cards">${vis.map(p=>`<div class="card pad">
+   <div class="prod-img"><img src="${p.img}" alt="" loading="lazy" decoding="async" width="360" height="360">
      <button class="fav" style="color:${S.favProducts.has(p.id)?'#f87c9b':'var(--txt-2)'}" onclick="toggleFav('${p.id}')">${ico('heart',16)}</button></div>
    <b style="display:block;margin:12px 0 4px;font-family:var(--display);font-size:.95rem;line-height:1.3">${p.n}</b>
    <div class="dim">${p.c}</div>
@@ -3283,12 +3292,14 @@ function prodGridHTML(list){
      <span class="badge badge-soft">${brl(p.pr)}</span><span class="badge badge-green">${brl(p.cm)} por venda</span></div>
    <button class="btn btn-primary btn-sm btn-block" style="margin-top:12px" onclick="openProduct('${p.id}')">Ver material de venda</button>
  </div>`).join('')}
- <div class="slot"><div><b style="display:block;font-family:var(--display);color:var(--txt-2)">Próximo produto</b>
-   <span style="font-size:.82rem">Os próximos entram aqui na ordem em que você enviar</span></div></div></div>`;
+ ${resto?'':`<div class="slot"><div><b style="display:block;font-family:var(--display);color:var(--txt-2)">Próximo produto</b>
+   <span style="font-size:.82rem">Os próximos entram aqui na ordem em que você enviar</span></div></div>`}</div>
+ ${resto?`<button class="btn btn-ghost btn-block" style="margin-top:16px" onclick="moreProds()">Carregar mais ${resto>PROD_PAGE?PROD_PAGE:resto} de ${resto}</button>`:''}`;
 }
 function renderProds(){const l=PRODUCTS.filter(p=>(S.prodCat==='Todos'||p.c===S.prodCat)&&(!S.prodSearch||p.n.toLowerCase().includes(S.prodSearch.toLowerCase())));
  $('#prodGrid').innerHTML=prodGridHTML(l);paintIcons($('#prodGrid'));}
-function toggleFav(id){S.favProducts.has(id)?S.favProducts.delete(id):S.favProducts.add(id);nav('produtos');}
+function toggleFav(id){S.favProducts.has(id)?S.favProducts.delete(id):S.favProducts.add(id);renderProds();}
+function moreProds(){S.prodPage++;renderProds();}
 function openProduct(id){
  const p=PRODUCTS.find(x=>x.id===id);
  openModal(`<div class="modal-head"><div><h3 style="font-size:1.05rem;line-height:1.3">${p.n}</h3>
