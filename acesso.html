@@ -447,6 +447,26 @@ button,a,.chip,.tab,.nv{-webkit-tap-highlight-color:rgba(59,130,246,.28);touch-a
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .img-item small{font-size:.66rem;color:var(--txt-3)}
 @media(max-width:640px){.img-grid{grid-template-columns:repeat(2,1fr)}}
+/* --- gerador de imagens Pollinations --- */
+.poll-card{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.poll-key{display:grid;grid-template-columns:1fr auto;gap:8px}
+.poll-status{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.ps-item{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--txt-2);
+  background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+.ps-item b{color:var(--txt-3);font-weight:600}
+.ps-dot{width:7px;height:7px;border-radius:50%;background:#6B7280;display:inline-block;flex:none}
+.ps-dot.on{background:#22C55E;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+.poll-stage{margin-top:14px;border-radius:13px;overflow:hidden;border:1px solid var(--line);
+  background:#0D0D0D;min-height:210px;display:grid;place-items:center}
+.poll-stage img{width:100%;height:auto;display:block}
+.poll-acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.ii-fav{position:absolute;top:7px;right:7px;width:27px;height:27px;border-radius:50%;
+  border:1px solid var(--line);background:rgba(13,13,13,.72);color:var(--txt-3);
+  display:grid;place-items:center;cursor:pointer;padding:0}
+.ii-fav.on{color:#FACC15;border-color:rgba(250,204,21,.5);background:rgba(250,204,21,.14)}
+.ii-acts{display:flex;gap:5px}
+.ii-acts .icon-btn{width:29px;height:29px}
+@media(max-width:640px){.poll-key{grid-template-columns:1fr}}
 
 /* centro de apis + gerador de videos */
 .api-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px}
@@ -1253,6 +1273,12 @@ const SB={
   async patch(table,filtro,row){
     const r=await fetch(this.url+'/rest/v1/'+table+'?'+filtro,
       {method:'PATCH',headers:this.head(),body:JSON.stringify(row)});
+    if(!r.ok)throw new Error(await r.text());
+    return true;
+  },
+  async del(table,filtro){
+    const r=await fetch(this.url+'/rest/v1/'+table+'?'+filtro,
+      {method:'DELETE',headers:this.head()});
     if(!r.ok)throw new Error(await r.text());
     return true;
   }
@@ -2621,7 +2647,20 @@ async function carregarApis(){
 }
 VIEWS.apis={title:'Centro de APIs',sub:'Conecte suas próprias chaves de IA para gerar dentro da plataforma',html(){
  const m=S.apis||{};
- return `<div class="api-grid">${IAS.map(a=>{
+ const on=S.polliOn!==false, tk=polliToken();
+ return `<div class="card pad poll-card">
+   <div class="api-top"><b>Pollinations AI</b>
+     <span class="api-badge${on?' on':''}">${on?'Conectado':'Sem conexão'}</span></div>
+   <span class="api-hint">Usada em <b>todas</b> as gerações de imagem da plataforma — Flux, GPT Image, Qwen Image, Seedream 5, Ideogram V4 Quality e Grok Imagine.</span>
+   <span class="api-hint">Não precisa de chave para o uso básico. A chave só é necessária se você quiser limite maior ou fila prioritária.</span>
+   <div class="poll-key">
+     <input class="input" id="k_polli" type="password" placeholder="chave da Pollinations (opcional)" autocomplete="off" value="${tk}">
+     <button class="btn btn-ghost" onclick="salvarPolli()">${ico('lock',14)} Salvar</button>
+   </div>
+   <button class="btn btn-primary btn-block" id="polliTestBtn" onclick="testarPolli()">${ico('refresh',14)} TESTAR CONEXÃO</button>
+   <div class="poll-status" id="polliStatus"></div>
+ </div>
+ <div class="api-grid">${IAS.map(a=>{
    const c=m[a.id];
    return `<div class="api-card">
      <div class="api-top"><b>${a.n}</b>
@@ -2652,6 +2691,31 @@ async function salvarApi(p){
 async function removerApi(p){
  try{ await chamarIA({acao:'remover_chave',provider:p}); await carregarApis(); S.apisCarregadas=true; nav('apis'); toast('Chave removida'); }
  catch(e){ toast('Não consegui remover agora'); }
+}
+
+/* ---------- POLLINATIONS: chave opcional e teste de conexão ---------- */
+function salvarPolli(){
+ const el=$('#k_polli'); if(!el)return;
+ polliSetToken(el.value.trim());
+ toast(el.value.trim()?'Chave da Pollinations salva neste dispositivo.':'Chave removida. O uso básico continua liberado.');
+}
+async function testarPolli(){
+ const btn=$('#polliTestBtn'), box=$('#polliStatus');
+ if(btn){btn.disabled=true;btn.textContent='Testando...';}
+ if(box)box.innerHTML='<span class="ps-item">Enviando um prompt de teste...</span>';
+ try{
+   const t=await polliCarregar(polliUrl('a blue circle on a white background','flux','1:1',7),45000);
+   S.polliOn=true;
+   if(box)box.innerHTML=`<span class="ps-item"><i class="ps-dot on"></i> Conexão OK</span>
+     <span class="ps-item"><b>Resposta</b> ${t}s</span>
+     <span class="ps-item"><b>Modelos</b> ${POLLI_MODELS.length} disponíveis</span>`;
+   toast('Pollinations respondendo em '+t+'s');
+ }catch(e){
+   S.polliOn=false;
+   if(box)box.innerHTML=`<span class="ps-item"><i class="ps-dot"></i> ${String(e.message).slice(0,70)}</span>`;
+   toast('Não consegui falar com a Pollinations agora');
+ }
+ if(btn){btn.disabled=false;btn.innerHTML=ico('refresh',14)+' TESTAR CONEXÃO';paintIcons(btn);}
 }
 
 VIEWS.gerador={title:'Gerador de vídeos IA',sub:'Escreva o prompt e gere direto aqui, usando a sua própria chave',html(){
@@ -2750,46 +2814,112 @@ async function gerarVideo(){
  btn.disabled=false;btn.innerHTML=ico('sparkles',15)+' GERAR VÍDEO'; paintIcons(btn);
 }
 
-/* ---------- GERADOR DE IMAGENS ---------- */
-const IAS_IMG=[
- {id:'gemini', n:'Google Gemini'},
- {id:'openai', n:'OpenAI'},
- {id:'fal',    n:'fal.ai'}
+/* ---------- GERADOR DE IMAGENS — POLLINATIONS AI ---------- */
+/* Todas as gerações passam pela Pollinations. O usuário só escolhe o modelo. */
+const POLLI_BASE='https://image.pollinations.ai/prompt/';
+const POLLI_MODELS=[
+ {id:'flux',                n:'Flux',                d:'Equilibrado e rápido — bom para quase tudo'},
+ {id:'gptimage',            n:'GPT Image',           d:'Entende prompts longos e escreve texto na imagem'},
+ {id:'qwen-image',          n:'Qwen Image',          d:'Bom nos detalhes e nas texturas'},
+ {id:'seedream5',           n:'Seedream 5',          d:'Alta resolução — ótimo para foto de produto'},
+ {id:'ideogram-v4-quality', n:'Ideogram V4 Quality', d:'O melhor para letreiro, rótulo e tipografia'},
+ {id:'grok-imagine',        n:'Grok Imagine',        d:'Estilo mais criativo e fora do padrão'}
 ];
-VIEWS.imagens={title:'Gerador de imagens IA',sub:'Crie a imagem do produto ou do criativo direto aqui',html(){
- const m=S.apis||{};
- const conectadas=IAS_IMG.filter(a=>m[a.id]);
+const POLLI_FMT={'1:1':[1024,1024],'9:16':[864,1536],'16:9':[1536,864]};
+function escAttr(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function polliToken(){ try{ return (localStorage.getItem('polli_token')||'').trim(); }catch(e){ return ''; } }
+function polliSetToken(v){ try{ v?localStorage.setItem('polli_token',v):localStorage.removeItem('polli_token'); }catch(e){} }
+function polliNome(id){ const m=POLLI_MODELS.find(x=>x.id===id); return m?m.n:id; }
+
+function polliUrl(prompt,modelo,formato,seed){
+ const par=POLLI_FMT[formato]||POLLI_FMT['1:1'];
+ const q=new URLSearchParams({model:modelo,width:par[0],height:par[1],seed:String(seed),nologo:'true',referrer:'promptverse'});
+ const t=polliToken(); if(t)q.set('token',t);
+ return POLLI_BASE+encodeURIComponent(prompt)+'?'+q.toString();
+}
+
+/* carrega a imagem de verdade e devolve o tempo que levou */
+function polliCarregar(url,timeout){
+ return new Promise((ok,erro)=>{
+   const img=new Image();
+   const t0=Date.now();
+   const tm=setTimeout(()=>{img.src='';erro(new Error('A geração demorou demais. Tente de novo.'));},timeout||120000);
+   img.onload=()=>{clearTimeout(tm);ok(Math.round((Date.now()-t0)/100)/10);};
+   img.onerror=()=>{clearTimeout(tm);erro(new Error('A Pollinations não respondeu. Tente outro modelo.'));};
+   img.src=url;
+ });
+}
+
+VIEWS.imagens={title:'Gerador de imagens IA',sub:'Escreva o prompt, escolha o modelo e gere direto aqui',html(){
+ let mod=S.imgModel||POLLI_MODELS[0].id;
+ if(!POLLI_MODELS.some(m=>m.id===mod))mod=POLLI_MODELS[0].id;
  return `<div class="gen-wrap">
   <div class="card pad">
     <label class="dim" style="font-size:.74rem;display:block;margin-bottom:6px">Prompt</label>
-    <textarea class="gen-txt" id="imgPrompt" placeholder="Descreva a imagem que você quer criar."></textarea>
+    <textarea class="gen-txt" id="imgPrompt" placeholder="Descreva a imagem que você quer criar.">${escAttr(S.imgPrompt||'')}</textarea>
     <div class="gen-opts">
-      <div><label>IA</label><select class="gen-sel" id="imgIA">
-        ${conectadas.length?conectadas.map(a=>`<option value="${a.id}">${a.n}</option>`).join('')
-                          :`<option value="">Nenhuma IA conectada</option>`}
+      <div><label>Modelo</label><select class="gen-sel" id="imgModel" onchange="S.imgModel=this.value;pintarStatus()">
+        ${POLLI_MODELS.map(m=>`<option value="${m.id}" ${m.id===mod?'selected':''}>${m.n}</option>`).join('')}
       </select></div>
-      <div><label>Formato</label><select class="gen-sel" id="imgFmt">
-        <option value="1:1">1:1 quadrado</option><option value="9:16">9:16 vertical</option><option value="16:9">16:9 horizontal</option>
+      <div><label>Formato</label><select class="gen-sel" id="imgFmt" onchange="S.imgFmt=this.value">
+        ${['1:1 quadrado','9:16 vertical','16:9 horizontal'].map((t,i)=>{const v=['1:1','9:16','16:9'][i];
+          return `<option value="${v}" ${v===(S.imgFmt||'1:1')?'selected':''}>${t}</option>`;}).join('')}
       </select></div>
       <div style="grid-column:1/-1">
         <button class="btn btn-primary btn-block" id="imgBtn" onclick="gerarImagem()">${ico('sparkles',15)} GERAR IMAGEM</button>
       </div>
+      <div style="grid-column:1/-1">
+        <div class="poll-status" id="imgStatus"></div>
+      </div>
     </div>
-    ${conectadas.length?'':`<p class="dim" style="margin-top:12px;font-size:.78rem">Conecte uma chave no <b>Centro de APIs</b> para liberar a geração.</p>`}
+    <p class="dim" style="margin-top:10px;font-size:.76rem">
+      ${(POLLI_MODELS.find(m=>m.id===mod)||POLLI_MODELS[0]).d}</p>
+
+    <div class="poll-stage" id="imgStage">
+      ${S.imgLast?`<img src="${S.imgLast.image_url}" alt="" loading="lazy">`
+                 :`<div class="vi-load">${ico('sparkles',22)}<span>A imagem gerada aparece aqui</span></div>`}
+    </div>
+    ${S.imgLast?`<div class="poll-acts">
+      <button class="btn btn-ghost btn-sm" onclick="baixarImagem('${S.imgLast.image_url}')">${ico('dl',13)} Baixar</button>
+      <button class="btn btn-ghost btn-sm" onclick="copiarPrompt(${JSON.stringify(S.imgLast.prompt).replace(/"/g,'&quot;')})">${ico('copy',13)} Copiar prompt</button>
+    </div>`:''}
   </div>
+
   <div class="card pad">
-    <div class="panel-head" style="padding:0 0 12px"><h3>Minhas imagens</h3></div>
-    <div id="imgHist"><div class="empty"><h4>Nada gerado ainda</h4><p>Suas imagens aparecem aqui.</p></div></div>
+    <div class="panel-head" style="padding:0 0 12px"><h3>Minhas imagens</h3>
+      <button class="chip${S.imgFav?' on':''}" onclick="S.imgFav=!S.imgFav;nav('imagens')">${ico('star',13)} Favoritas</button></div>
+    <input class="input" id="imgBusca" placeholder="Buscar no histórico pelo prompt ou modelo" value="${escAttr(S.imgQ||'')}"
+           oninput="S.imgQ=this.value;pintarHistorico()" style="margin-bottom:12px">
+    <div id="imgHist"><div class="empty"><h4>Carregando...</h4><p>Buscando suas imagens.</p></div></div>
   </div>
  </div>`;
-},after(){carregarImagens();}};
+},after(){ pintarStatus(); carregarImagens(); }};
+
+function pintarStatus(){
+ const box=$('#imgStatus'); if(!box)return;
+ const mod=S.imgModel||POLLI_MODELS[0].id;
+ const on=S.polliOn!==false;
+ box.innerHTML=`<span class="ps-item"><b>Modelo</b> ${polliNome(mod)}</span>
+   <span class="ps-item"><i class="ps-dot${on?' on':''}"></i> ${on?'Pollinations online':'Sem conexão'}</span>
+   <span class="ps-item"><b>Tempo</b> ${S.imgTempo?S.imgTempo+'s':'—'}</span>`;
+}
 
 async function carregarImagens(){
+ try{ S.imgs=await SB.get('generated_images?select=*&order=created_at.desc&limit=60')||[]; }
+ catch(e){ S.imgs=[]; }
+ pintarHistorico();
+}
+
+function pintarHistorico(){
  const box=$('#imgHist'); if(!box)return;
- let lista=[];
- try{ lista=await SB.get('generated_images?select=*&order=created_at.desc&limit=24')||[]; }catch(e){}
+ const q=(S.imgQ||'').trim().toLowerCase();
+ let lista=(S.imgs||[]);
+ if(S.imgFav)lista=lista.filter(v=>v.favorito);
+ if(q)lista=lista.filter(v=>((v.prompt||'')+' '+polliNome(v.modelo||'')).toLowerCase().includes(q));
  if(!lista.length){
-   box.innerHTML=`<div class="empty"><h4>Nada gerado ainda</h4><p>Suas imagens aparecem aqui.</p></div>`;
+   box.innerHTML=`<div class="empty"><h4>${q||S.imgFav?'Nada encontrado':'Nada gerado ainda'}</h4>
+     <p>${q||S.imgFav?'Tente outro termo ou tire o filtro.':'Suas imagens aparecem aqui.'}</p></div>`;
    return;
  }
  box.innerHTML=`<div class="img-grid">${lista.map(v=>`
@@ -2797,28 +2927,83 @@ async function carregarImagens(){
      <div class="ii-stage">
        ${v.image_url?`<img src="${v.image_url}" alt="" loading="lazy">`
                     :`<div class="vi-load">${ico('x',20)}<span>${(v.erro||'Falhou').slice(0,50)}</span></div>`}
+       <button class="ii-fav${v.favorito?' on':''}" title="Favoritar" onclick="favImagem('${v.id}')">${ico('star',14)}</button>
      </div>
      <div class="ii-body">
        <p>${(v.prompt||'').slice(0,90)}</p>
-       <small>${new Date(v.created_at).toLocaleDateString('pt-BR')} • ${v.provider}</small>
-       ${v.image_url?`<a class="btn btn-ghost btn-sm btn-block" href="${v.image_url}" target="_blank" rel="noopener" download>${ico('dl',13)} Baixar</a>`:''}
+       <small>${new Date(v.created_at).toLocaleDateString('pt-BR')} • ${polliNome(v.modelo||'flux')}</small>
+       <div class="ii-acts">
+         <button class="icon-btn" title="Baixar" onclick="baixarImagem('${v.image_url}')">${ico('dl',14)}</button>
+         <button class="icon-btn" title="Copiar prompt" onclick="copiarPrompt(${JSON.stringify(v.prompt||'').replace(/"/g,'&quot;')})">${ico('copy',14)}</button>
+         <button class="icon-btn" title="Excluir" onclick="excluirImagem('${v.id}')">${ico('x',14)}</button>
+       </div>
      </div>
    </div>`).join('')}</div>`;
  paintIcons(box);
 }
+
 async function gerarImagem(){
- const prompt=$('#imgPrompt').value.trim(), provider=$('#imgIA').value;
- const formato=$('#imgFmt').value, btn=$('#imgBtn');
- if(!provider){toast('Conecte uma IA no Centro de APIs');return;}
+ const el=$('#imgPrompt'); if(!el)return;
+ const prompt=el.value.trim();
+ const modelo=$('#imgModel').value, formato=$('#imgFmt').value, btn=$('#imgBtn');
+ S.imgFmt=formato;
  if(prompt.length<5){toast('Escreva um prompt maior');return;}
- btn.disabled=true;btn.textContent='Gerando...';
+
+ S.imgPrompt=prompt; S.imgModel=modelo;
+ const seed=Math.floor(Math.random()*1000000000);
+ const url=polliUrl(prompt,modelo,formato,seed);
+
+ btn.disabled=true; btn.textContent='Gerando...';
+ const stage=$('#imgStage');
+ if(stage)stage.innerHTML=`<div class="vi-load"><span class="vi-spin"></span><span>Gerando com ${polliNome(modelo)}...</span></div>`;
+
  try{
-   await chamarIA({acao:'gerar_imagem',provider,prompt,formato});
-   $('#imgPrompt').value='';
-   toast('Imagem pronta');
-   carregarImagens();
- }catch(e){ toast(String(e.message).slice(0,90)); }
- btn.disabled=false;btn.innerHTML=ico('sparkles',15)+' GERAR IMAGEM'; paintIcons(btn);
+   const tempo=await polliCarregar(url);
+   S.imgTempo=tempo; S.polliOn=true;
+   S.imgLast={prompt,modelo,formato,image_url:url,seed};
+   try{
+     const r=await SB.insert('generated_images',
+       {user_id:SB.uid,provider:'pollinations',modelo,prompt,formato,image_url:url,seed});
+     if(r&&r[0])S.imgs=[r[0]].concat(S.imgs||[]);
+   }catch(e){ toast('Imagem pronta, mas não consegui salvar no histórico'); }
+   nav('imagens');
+   toast('Imagem pronta em '+tempo+'s');
+ }catch(e){
+   S.polliOn=false; pintarStatus();
+   if(stage)stage.innerHTML=`<div class="vi-load">${ico('x',22)}<span>${String(e.message).slice(0,70)}</span></div>`;
+   toast(String(e.message).slice(0,90));
+   btn.disabled=false; btn.innerHTML=ico('sparkles',15)+' GERAR IMAGEM'; paintIcons(btn);
+ }
+}
+
+async function favImagem(id){
+ const v=(S.imgs||[]).find(x=>x.id===id); if(!v)return;
+ const novo=!v.favorito;
+ try{ await SB.patch('generated_images','id=eq.'+id,{favorito:novo}); v.favorito=novo; pintarHistorico(); }
+ catch(e){ toast('Não consegui favoritar agora'); }
+}
+
+async function excluirImagem(id){
+ try{ await SB.del('generated_images','id=eq.'+id);
+      S.imgs=(S.imgs||[]).filter(x=>x.id!==id); pintarHistorico(); toast('Imagem excluída'); }
+ catch(e){ toast('Não consegui excluir agora'); }
+}
+
+function copiarPrompt(t){
+ if(navigator.clipboard&&window.isSecureContext){
+   navigator.clipboard.writeText(t).then(()=>toast('Prompt copiado.')).catch(()=>copy(t,'Prompt'));
+ }else copy(t,'Prompt');
+}
+
+async function baixarImagem(url){
+ if(!url)return;
+ try{
+   const r=await fetch(url); const b=await r.blob();
+   const u=URL.createObjectURL(b), a=document.createElement('a');
+   a.href=u; a.download='promptverse-'+Date.now()+'.jpg';
+   document.body.appendChild(a); a.click(); a.remove();
+   setTimeout(()=>URL.revokeObjectURL(u),4000);
+ }catch(e){ window.open(url,'_blank','noopener'); }
 }
 
 /* ---------- GANCHOS VIRAIS ---------- */
