@@ -234,7 +234,8 @@ select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg 
 /* ===== APP SHELL ===== */
 .app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100vh;position:relative;z-index:1}
 .side{border-right:1px solid var(--line);background:var(--glass-2);backdrop-filter:blur(18px);
-  position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:20px 14px}
+  position:sticky;top:0;align-self:start;height:100vh;max-height:100vh;overflow:hidden;
+  display:flex;flex-direction:column;padding:20px 14px}
 .side-nav{display:flex;flex-direction:column;gap:3px;margin-top:22px;overflow-y:auto;flex:1}
 .side-lbl{font-family:var(--mono);font-size:.63rem;text-transform:uppercase;letter-spacing:.16em;color:var(--txt-3);padding:16px 12px 6px}
 .nv{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;font-size:.89rem;color:var(--txt-2);transition:.18s;text-align:left;width:100%}
@@ -572,6 +573,11 @@ button,a,.chip,.tab,.nv{-webkit-tap-highlight-color:rgba(59,130,246,.28);touch-a
 .vid-sec-t h3{font-family:var(--display);font-size:1rem;color:var(--white);margin:0}
 .vid-sec-t span.line{flex:1;height:1px;background:var(--line)}
 .vid-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:16px}
+/* grade unica: cards de imagem e de video lado a lado, na mesma linha */
+.mix-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));align-items:start}
+.mix-grid .lib-card,.mix-grid .vid-card{height:100%}
+.mix-grid .lib-img,.mix-grid .vid-stage{aspect-ratio:9/16;max-height:none}
+.mix-grid .lib-img img{object-fit:cover}
 .vid-card{display:flex;flex-direction:column;border-radius:16px;overflow:hidden;
   border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(14px);transition:.22s}
 .vid-card:hover{transform:translateY(-3px);border-color:var(--line-2);box-shadow:0 14px 32px rgba(8,31,92,.34)}
@@ -3392,7 +3398,103 @@ const GANCHOS=[
  {fmt:'POV', nicho:'', txt:'POV: Quando você encontra a solução que procurava há tanto tempo', obs:''},
  {fmt:'UGC', nicho:'', txt:'Minha experiência foi melhor do que qualquer expectativa', obs:''},
  {fmt:'POV', nicho:'', txt:'POV: O produto que me fez pensar "onde isso estava antes?"', obs:''},
- {fmt:'UGC', nicho:'', txt:'Comprei por indicação e agora entendo perfeitamente o motivo', obs:''}
+ {fmt:'UGC', nicho:'', txt:'Comprei por indicação e agora entendo perfeitamente o motivo', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra algo que realmente vale o investimento', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei sem saber o que esperar e me surpreendi', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu depois de testar isso pela primeira vez e ver o resultado', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando uma compra simples resolve um problema antigo', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Vi isso por acaso e resolvi dar uma chance', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O momento em que percebi que deveria ter comprado antes', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não esperava que fosse tão útil assim', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você compra achando que é exagero da internet', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Minha reação foi completamente diferente do que imaginei', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei só para ver qual era a graça', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando algo entrega exatamente o que promete', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não acreditava nas avaliações até experimentar', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O produto que mudou minha rotina sem esforço', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Resolvi testar porque estava curioso', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra a solução mais simples possível', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Achei que seria igual aos outros que já usei', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu depois de entender por que isso está viralizando', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei sem expectativa e valeu a pena', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando uma compra impulsiva acaba sendo perfeita', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O dia em que encontrei algo realmente útil', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Vi tantas recomendações que precisei testar', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você percebe que encontrou um verdadeiro achado', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Minha opinião mudou logo no primeiro uso', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu olhando o resultado e pensando "não é possível"', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei para testar e fiquei impressionado', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você finalmente encontra algo que funciona', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não vou mentir, estava desconfiando bastante', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O produto que superou minhas expectativas rapidamente', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Resolvi gravar porque me surpreendeu muito', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra uma solução prática para o dia a dia', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Achei que era apenas mais uma moda da internet', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu depois de descobrir por que todo mundo compra isso', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei porque apareceu para mim várias vezes', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando algo simples entrega resultados incríveis', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não esperava notar diferença tão rápido', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O momento em que você entende todo o hype', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Minha experiência foi melhor do que imaginei', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você compra por curiosidade e se surpreende', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Achei que não faria diferença nenhuma', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei para testar e agora recomendo', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra algo que realmente facilita sua vida', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não acreditava que seria tão eficiente', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Resolvi experimentar e não me arrependo', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você percebe que estava perdendo uma oportunidade', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Achei que seria só mais uma compra online', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu depois de descobrir esse segredo viral', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei sem pesquisar muito e deu certo', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra exatamente o que precisava', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não entendia o sucesso até usar', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O dia em que parei de complicar as coisas', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Minha primeira impressão estava completamente errada', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando um produto entrega mais do que o esperado', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei por indicação e acertei', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu depois de finalmente testar isso', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Achei que seria propaganda demais e resultado de menos', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra uma solução que faz sentido', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Resolvi arriscar e valeu cada centavo', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O produto que entrou para minha lista de favoritos', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não estava procurando isso, mas encontrei', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você vê funcionando na prática', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei porque queria tirar minhas próprias conclusões', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu depois de descobrir um dos melhores achados da internet', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Achei que seria apenas mais uma tendência passageira', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra algo que realmente compensa', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não esperava um resultado tão satisfatório', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O momento em que percebi que fiz uma ótima compra', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Resolvi experimentar sem criar expectativas', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando algo simples melhora seu dia a dia', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei para testar e fiquei positivamente surpreso', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Achei que não funcionaria para mim', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra uma solução inteligente', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Minha experiência foi muito melhor do que imaginei', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O produto que me fez mudar de opinião', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei porque estava em dúvida e me surpreendi', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você finalmente encontra algo confiável', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não vou exagerar, mas gostei muito', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu depois de perceber que deveria ter comprado antes', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Resolvi testar para ver se era tudo isso mesmo', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra um produto que entrega resultado', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Achei que seria apenas mais uma promessa', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O dia em que descobri algo realmente útil', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei sem saber quase nada sobre ele', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você testa e entende por que viralizou', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não imaginava que seria tão prático', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu depois de encontrar uma solução definitiva', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Minha reação foi de surpresa total', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando uma compra vale cada centavo gasto', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei por curiosidade e fiquei impressionado', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: O produto que me fez pensar "como vivi sem isso?"', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Achei que era exagero até experimentar', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você encontra algo que supera suas expectativas', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Resolvi comprar e hoje entendo o motivo do sucesso', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Eu depois de descobrir esse produto que ninguém me contou', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Não acreditava que seria tão bom assim', obs:''},
+ {fmt:'POV', nicho:'', txt:'POV: Quando você faz uma compra e acerta em cheio', obs:''},
+ {fmt:'UGC', nicho:'', txt:'Comprei para testar e agora uso todos os dias', obs:''}
 ];
 VIEWS.ganchos={title:'Ganchos virais',sub:'As primeiras linhas que seguram o vídeo, prontas para adaptar ao seu produto',html(){
  const f=S.ganFmt||'Todos';
@@ -3721,7 +3823,7 @@ const LIBVID=[
 ];
 
 VIEWS.prompts={title:'Biblioteca de prompts',sub:'Prompts prontos com o passo a passo de uso',html(){
- return `<div class="lib-grid">${LIB.map((c,i)=>`
+ return `<div class="lib-grid mix-grid">${LIB.map((c,i)=>`
   <div class="lib-card" onclick="openLib(${i})" role="button" tabindex="0">
     <div class="lib-img">
       ${c.img?`<img src="${c.img}" alt="" loading="lazy" decoding="async">`
@@ -3732,10 +3834,7 @@ VIEWS.prompts={title:'Biblioteca de prompts',sub:'Prompts prontos com o passo a 
       <p class="lib-desc">${c.desc}</p>
       <button class="btn btn-primary btn-block" onclick="event.stopPropagation();copyLib(${i})">${ico('copy',15)} COPIAR PROMPT</button>
     </div>
-  </div>`).join('')}</div>
-
- <div class="vid-sec-t"><h3>Prompts em vídeo</h3><span class="line"></span></div>
- <div class="vid-grid">${LIBVID.map((c,i)=>`
+  </div>`).join('')}${LIBVID.map((c,i)=>`
   <div class="vid-card">
     <div class="vid-stage" id="vst${i}">
       ${(c.video||VIDEO_BASE)?`<video data-vi="${i}" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture></video>
