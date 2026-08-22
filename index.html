@@ -360,7 +360,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:40px}
     <div class="wrap">
       <div class="sec-head rev">
         <h2>Tudo o que você precisa <span class="fade">para postar sem travar.</span></h2>
-        <p>Oito módulos que resolvem o dia a dia de quem cria conteúdo para vender.</p>
+        <p>Nove módulos que resolvem o dia a dia de quem cria conteúdo para vender.</p>
       </div>
       <div class="stage" id="stage"></div>
       <div class="picker" id="picker"></div>
@@ -525,14 +525,15 @@ $('#canais').innerHTML=[...CANAIS,...CANAIS].map(c=>`<span class="chan"><i></i>$
 /* ---------- módulos ----------
    Troque img:'' pelo caminho da imagem, ex.: img:'imagens/produtos.png' */
 const MODULOS=[
- {n:'Central de produtos virais', img:'', d:'50 produtos com preço, comissão e a copy que já vendeu.'},
- {n:'Biblioteca de prompts',      img:'', d:'Prompt pronto com o passo a passo de uso.'},
- {n:'Prompts bônus',              img:'', d:'29 prompts com a imagem de exemplo, prontos para colar no ChatGPT ou no Gemini.'},
- {n:'Modelos para modelar',       img:'', d:'49 rostos em 3x4 para baixar e usar como base na sua IA.'},
- {n:'Prompt Modelo UGC',          img:'', d:'Dez movimentos de câmera para a sua modelo repetir.'},
- {n:'Gerador de imagens IA',      img:'', d:'Seis modelos de imagem, sem precisar contratar API paga.'},
- {n:'Gerador de vídeos IA',       img:'', d:'Escreva o prompt e receba o vídeo pronto.'},
- {n:'Ganchos virais',             img:'', d:'364 primeiras linhas separadas entre POV e UGC.'}
+ {n:'Central de produtos virais', img:'modulos/mod-1.jpg', d:'Produto, preço, comissão e a copy que já vendeu.'},
+ {n:'Criar modelo',               img:'modulos/mod-9.jpg', d:'Monte o rosto que vai aparecer em todos os seus vídeos e reuse sempre o mesmo.'},
+ {n:'Biblioteca de prompts',      img:'modulos/mod-2.jpg', d:'Prompt pronto com o passo a passo de uso.'},
+ {n:'Prompts bônus',              img:'modulos/mod-3.jpg', d:'Prompts com a imagem de exemplo, prontos para colar no ChatGPT ou no Gemini.'},
+ {n:'Modelos para modelar',       img:'modulos/mod-4.jpg', d:'Rostos em 3x4 para baixar e usar como base na sua IA.'},
+ {n:'Prompt Modelo UGC',          img:'modulos/mod-5.jpg', d:'Movimentos de câmera para a sua modelo repetir.'},
+ {n:'Gerador de imagens IA',      img:'modulos/mod-6.jpg', d:'Escreva o prompt, escolha o modelo e gere direto na plataforma.'},
+ {n:'Gerador de vídeos IA',       img:'modulos/mod-7.jpg', d:'Escreva o prompt e receba o vídeo pronto.'},
+ {n:'Ganchos virais',             img:'modulos/mod-8.jpg', d:'A primeira linha que segura o vídeo, separada por formato.'}
 ];
 let mAtual=0;
 $('#stage').innerHTML=MODULOS.map((m,i)=>`
