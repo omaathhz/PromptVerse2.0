@@ -232,9 +232,9 @@ select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg 
 .auth-alt button{color:var(--blue-hi);font-weight:600}
 
 /* ===== APP SHELL ===== */
-.app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100vh;position:relative;z-index:1}
+.app{min-height:100vh;position:relative;z-index:1}
 .side{border-right:1px solid var(--line);background:var(--glass-2);backdrop-filter:blur(18px);
-  position:sticky;top:0;align-self:start;height:100vh;max-height:100vh;overflow:hidden;
+  position:fixed;top:0;left:0;width:var(--sidebar);height:100vh;max-height:100vh;overflow:hidden;z-index:20;
   display:flex;flex-direction:column;padding:20px 14px}
 .side-nav{display:flex;flex-direction:column;gap:3px;margin-top:22px;overflow-y:auto;flex:1}
 .side-lbl{font-family:var(--mono);font-size:.63rem;text-transform:uppercase;letter-spacing:.16em;color:var(--txt-3);padding:16px 12px 6px}
@@ -247,7 +247,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg 
 .plan-chip{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border-radius:12px;
   background:rgba(37,99,235,.12);border:1px solid rgba(59,130,246,.24);font-size:.78rem}
 
-.main{min-width:0;display:flex;flex-direction:column}
+.main{min-width:0;margin-left:var(--sidebar);display:flex;flex-direction:column}
 .top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:14px 22px;
   border-bottom:1px solid var(--line);background:rgba(13,13,13,.82);backdrop-filter:blur(16px)}
 .top h2{font-size:1.08rem}
@@ -259,8 +259,8 @@ select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg 
 .view{padding:22px;flex:1}
 .burger{display:none}
 @media(max-width:1000px){
-  .app{grid-template-columns:1fr}
-  .side{position:fixed;left:0;top:0;width:284px;z-index:60;transform:translateX(-102%);transition:.3s cubic-bezier(.4,0,.2,1)}
+  .main{margin-left:0}
+  .side{width:284px;z-index:60;transform:translateX(-102%);transition:.3s cubic-bezier(.4,0,.2,1)}
   .side.open{transform:none;box-shadow:0 0 60px rgba(0,0,0,.7)}
   .burger{display:grid}
   .scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:55;display:none}
