@@ -137,6 +137,21 @@ section{padding:84px 0}
   border:1px solid var(--line);background:var(--graphite);position:relative}
 .gal-item video{width:100%;height:100%;object-fit:cover}
 .gal-item .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--txt-3);font-size:.74rem}
+.proof{position:relative;height:380px;overflow:hidden;border-radius:20px;margin-bottom:26px;
+  mask-image:linear-gradient(180deg,transparent,#000 14%,#000 86%,transparent)}
+.proof-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;height:100%}
+.proof-col{display:flex;flex-direction:column;gap:12px;will-change:transform;animation:proofUp 26s linear infinite}
+.proof-col.down{animation-name:proofDown}
+.proof-col:nth-child(2){animation-duration:32s}
+.proof-col:nth-child(3){animation-duration:22s}
+.proof-col img{width:100%;border-radius:14px;display:block;border:1px solid var(--line)}
+@keyframes proofUp{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@keyframes proofDown{from{transform:translateY(-50%)}to{transform:translateY(0)}}
+@media(max-width:640px){
+  .proof{height:300px}
+  .proof-cols{grid-template-columns:repeat(2,1fr)}
+  .proof-cols>.proof-col:nth-child(3){display:none}
+}
 
 /* como funciona: cards empilhados */
 .steps{position:relative;height:330px;max-width:520px;margin:0 auto}
@@ -399,6 +414,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:40px}
         <h2>Quem usa, <span class="fade">recomenda</span></h2>
         <p>Criadores que pararam de travar na hora de gravar.</p>
       </div>
+      <div class="proof" id="proofWrap"><div class="proof-cols" id="proofCols"></div></div>
       <div class="deps" id="deps"></div>
       <div class="arrows"><button onclick="dep(-1)" aria-label="Anterior">‹</button><button onclick="dep(1)" aria-label="Próximo">›</button></div>
     </div>
@@ -611,6 +627,25 @@ const DEPS=[
  {q:'Os módulos de vídeos e prompts UGC são absurdamente bons. Me ajudaram a criar conteúdos muito mais profissionais.', n:'Bruno K.', c:'', foto:'depoimentos/dep9.jpg'},
  {q:'Entrei sem experiência e hoje consigo produzir conteúdo todos os dias usando apenas as ferramentas da plataforma.', n:'Fernanda O.', c:'', foto:'depoimentos/dep10.jpg'}
 ];
+/* PROVAS = prints/screenshots que rolam em loop (colunas alternando subir/descer) — ele vai mandar as fotos */
+const PROVAS=[
+ 'provas/prova1.jpg',
+ 'provas/prova2.jpg',
+ 'provas/prova3.jpg',
+ 'provas/prova4.jpg',
+ 'provas/prova5.jpg'
+];
+(function(){
+  const wrap=$('#proofWrap');
+  if(!PROVAS.length){ wrap&&wrap.remove(); return; }
+  const cols=[[],[],[]];
+  PROVAS.forEach((src,i)=>cols[i%3].push(src));
+  $('#proofCols').innerHTML=cols.map((c,i)=>c.length?`
+    <div class="proof-col ${i%2?'down':''}">
+      ${[...c,...c].map(src=>`<img src="${src}" loading="lazy" alt="">`).join('')}
+    </div>`:'').join('');
+})();
+
 let dAtual=0;
 $('#deps').innerHTML=DEPS.map((d,i)=>`
   <blockquote class="dep" data-i="${i}">
