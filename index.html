@@ -566,17 +566,20 @@ const GALERIA=[
 ];
 const itens=[...GALERIA,...GALERIA].map((v,i)=>`
   <div class="gal-item">
-    ${v?`<video src="${v}" muted loop playsinline preload="metadata"></video>`
+    ${v?`<video data-gi="${i%GALERIA.length}" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture></video>`
        :`<div class="ph">VÍDEO ${String((i%GALERIA.length)+1).padStart(2,'0')}</div>`}
   </div>`).join('');
 $('#galeria').innerHTML=itens;
-/* toca só o que está na tela, para o celular não carregar sete vídeos de uma vez */
+/* toca só o que está na tela, carregando o src na hora (evita tela preta e economiza dados no celular) */
 (()=>{
   const io=new IntersectionObserver(es=>es.forEach(e=>{
-    const v=e.target;
-    if(e.isIntersecting){ v.play().catch(()=>{}); } else { v.pause(); }
+    const v=e.target,i=+v.dataset.gi;
+    if(e.isIntersecting){
+      if(!v.getAttribute('src')){ v.muted=true; v.setAttribute('src',GALERIA[i]); v.load(); }
+      const p=v.play(); if(p&&p.catch)p.catch(()=>{});
+    } else { v.pause(); }
   }),{threshold:.2});
-  document.querySelectorAll('.gal-item video').forEach(v=>io.observe(v));
+  document.querySelectorAll('.gal-item video[data-gi]').forEach(v=>io.observe(v));
 })();
 
 /* ---------- como funciona ---------- */
