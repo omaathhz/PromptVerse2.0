@@ -135,7 +135,7 @@ section{padding:84px 0}
 .gal:hover .gal-track{animation-play-state:paused}
 .gal-item{width:clamp(180px,26vw,240px);aspect-ratio:9/16;border-radius:16px;overflow:hidden;
   border:1px solid var(--line);background:var(--graphite);position:relative}
-.gal-item video{width:100%;height:100%;object-fit:cover;transform:translateZ(0);-webkit-transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.gal-item video{width:100%;height:100%;object-fit:cover}
 .gal-item .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--txt-3);font-size:.74rem}
 
 /* como funciona: cards empilhados */
@@ -566,16 +566,10 @@ const GALERIA=[
 ];
 const itens=[...GALERIA,...GALERIA].map((v,i)=>`
   <div class="gal-item">
-    ${v?`<video src="${v}" muted loop playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>`
+    ${v?`<video src="${v}" autoplay muted loop playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>`
        :`<div class="ph">VÍDEO ${String((i%GALERIA.length)+1).padStart(2,'0')}</div>`}
   </div>`).join('');
 $('#galeria').innerHTML=itens;
-/* a faixa roda sozinha o tempo todo, entao os videos so tocam direto (sem observer, que travava a animacao) */
-document.querySelectorAll('.gal-item video').forEach(v=>{
-  const tryPlay=()=>{const p=v.play();if(p&&p.catch)p.catch(()=>{});};
-  tryPlay();
-  v.addEventListener('canplay',tryPlay,{once:true});
-});
 
 /* ---------- como funciona ---------- */
 const PASSOS=[
@@ -606,10 +600,16 @@ setInterval(()=>{ if(!document.hidden) passo(1); },5600);
 /* ---------- depoimentos ----------
    Troque foto:'' pelo caminho do avatar, ex.: foto:'imagens/dep1.jpg' */
 const DEPS=[
- {q:'Eu não aparecia nos vídeos e por isso não vendia. Hoje posto todo dia com a modelo gerada e as comissões entram sozinhas.', n:'Fernanda', c:'Afiliada TikTok Shop', foto:''},
- {q:'A copy pronta economiza a parte que eu mais travava. Escolho o produto, gravo em cima do roteiro e pronto.', n:'Camila', c:'Criadora de conteúdo', foto:''},
- {q:'Os movimentos de câmera mudaram meu resultado. Meus vídeos pararam de parecer amadores.', n:'Rafael', c:'Afiliado há 8 meses', foto:''},
- {q:'Cheguei nos 2 mil seguidores seguindo as aulas e ativei minha loja na mesma semana.', n:'Juliana', c:'Começou do zero', foto:''}
+ {q:'Comecei do zero no TikTok Shop e em poucos dias já estava criando vídeos com IA sem aparecer. A biblioteca de prompts economiza horas de trabalho.', n:'Lucas M.', c:'', foto:'depoimentos/dep1.jpg'},
+ {q:'O módulo de modelos UGC foi o que mais me ajudou. Antes eu travava para criar conteúdo, agora consigo fazer vários vídeos por dia.', n:'Ana C.', c:'', foto:'depoimentos/dep2.jpg'},
+ {q:'Já testei várias ferramentas, mas o PromptVerse reúne tudo em um só lugar. Prompts, estratégias, modelos e suporte.', n:'Pedro R.', c:'', foto:'depoimentos/dep3.jpg'},
+ {q:'A área de prompts pronta vale a assinatura sozinha. Copio, adapto e já começo a produzir conteúdo.', n:'Juliana S.', c:'', foto:'depoimentos/dep4.jpg'},
+ {q:'Consegui bater meus primeiros resultados usando apenas as estratégias de crescimento e os modelos da plataforma.', n:'Rafael T.', c:'', foto:'depoimentos/dep5.jpg'},
+ {q:'O Agente IA virou meu braço direito. Peço copy, ganchos, roteiros e ideias de criativos em segundos.', n:'Mariana L.', c:'', foto:'depoimentos/dep6.jpg'},
+ {q:'Economizei muito tempo. Antes precisava usar várias ferramentas diferentes, agora faço tudo dentro do PromptVerse.', n:'Felipe A.', c:'', foto:'depoimentos/dep7.jpg'},
+ {q:'A melhor parte é que mesmo quem nunca vendeu no TikTok Shop consegue seguir o passo a passo e começar.', n:'Camila P.', c:'', foto:'depoimentos/dep8.jpg'},
+ {q:'Os módulos de vídeos e prompts UGC são absurdamente bons. Me ajudaram a criar conteúdos muito mais profissionais.', n:'Bruno K.', c:'', foto:'depoimentos/dep9.jpg'},
+ {q:'Entrei sem experiência e hoje consigo produzir conteúdo todos os dias usando apenas as ferramentas da plataforma.', n:'Fernanda O.', c:'', foto:'depoimentos/dep10.jpg'}
 ];
 let dAtual=0;
 $('#deps').innerHTML=DEPS.map((d,i)=>`
