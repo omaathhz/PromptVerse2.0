@@ -140,10 +140,10 @@ section{padding:84px 0}
 .proof{position:relative;height:380px;overflow:hidden;border-radius:20px;margin-bottom:26px;
   mask-image:linear-gradient(180deg,transparent,#000 14%,#000 86%,transparent)}
 .proof-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;height:100%}
-.proof-col{display:flex;flex-direction:column;gap:12px;will-change:transform;animation:proofUp 26s linear infinite}
+.proof-col{display:flex;flex-direction:column;gap:12px;will-change:transform;animation:proofUp 14s linear infinite}
 .proof-col.down{animation-name:proofDown}
-.proof-col:nth-child(2){animation-duration:32s}
-.proof-col:nth-child(3){animation-duration:22s}
+.proof-col:nth-child(2){animation-duration:18s}
+.proof-col:nth-child(3){animation-duration:11s}
 .proof-col img{width:100%;border-radius:14px;display:block;border:1px solid var(--line)}
 @keyframes proofUp{from{transform:translateY(0)}to{transform:translateY(-50%)}}
 @keyframes proofDown{from{transform:translateY(-50%)}to{transform:translateY(0)}}
