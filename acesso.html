@@ -5114,7 +5114,7 @@ VIEWS.conta={title:'Minha conta',sub:'Perfil, plano e segurança',html(){
    </div>
   </div>
  </div>`;
-}};
+},after(){pintarAvatar();}};
 function iniciais(nome){
  return (nome||'').replace(/[^a-zA-ZÀ-ÿ ]/g,'').split(' ').filter(Boolean).slice(0,2)
         .map(w=>w[0]).join('').toUpperCase()||'PV';
@@ -5134,7 +5134,7 @@ async function carregarPerfil(){
  }catch(e){}
 }
 function pintarAvatar(){
- document.querySelectorAll('.top .av').forEach(a=>{
+ document.querySelectorAll('.top .av, #cAv').forEach(a=>{
    if(S.user.avatar){a.textContent='';a.style.backgroundImage=`url('${S.user.avatar}')`;a.style.backgroundSize='cover';a.style.backgroundPosition='center';}
    else{a.style.backgroundImage='';a.textContent=S.user.initials;}
  });
