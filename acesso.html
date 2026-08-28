@@ -493,6 +493,15 @@ button,a,.chip,.tab,.nv{-webkit-tap-highlight-color:rgba(59,130,246,.28);touch-a
   background:#0D0D0D;min-height:210px;display:grid;place-items:center}
 .poll-stage img{width:100%;height:auto;display:block}
 .poll-acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.cg-drop{border:1.5px dashed var(--line);border-radius:13px;min-height:180px;display:grid;place-items:center;
+  cursor:pointer;background:#0D0D0D;overflow:hidden;transition:border-color .2s ease}
+.cg-drop:hover{border-color:var(--blue)}
+.cg-drop img{width:100%;height:220px;object-fit:cover;display:block}
+.cg-result{margin-top:16px;display:flex;flex-direction:column;gap:12px}
+.cg-box{border:1px solid var(--line);border-radius:13px;padding:14px;background:var(--glass-2)}
+.cg-box h4{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--blue-hi);margin:0 0 8px}
+.cg-box p{margin:0 0 10px;font-size:.86rem;line-height:1.55;color:var(--txt-2)}
 .ii-fav{position:absolute;top:7px;right:7px;width:27px;height:27px;border-radius:50%;
   border:1px solid var(--line);background:rgba(13,13,13,.72);color:var(--txt-3);
   display:grid;place-items:center;cursor:pointer;padding:0}
@@ -1414,7 +1423,8 @@ const S={
   view:'dashboard', range:'semanal', metric:'seguidores',
   favProducts:new Set(['p2']), favPrompts:new Set(),
   prompts:[], promptHistory:[], savedModels:[], chat:[], busy:false,
-  genImg:null, kpi:null, vendas:null, seguidores:null, notifs:null, licenseKey:null, bonus:[], bonusTotal:29, promptCat:'Prompts para Imagens', toolCat:'Todas', prodCat:'Todos', prodSearch:'', prodPage:1, prodPage:1, ganFmt:'Todos', apisCarregadas:false, apis:{}
+  genImg:null, kpi:null, vendas:null, seguidores:null, notifs:null, licenseKey:null, bonus:[], bonusTotal:29, promptCat:'Prompts para Imagens', toolCat:'Todas', prodCat:'Todos', prodSearch:'', prodPage:1, prodPage:1, ganFmt:'Todos', apisCarregadas:false, apis:{},
+  cgImg:'', cgNome:'', cgProvider:'', cgCopy:'', cgCta:'', cgChat:[], cgBusy:false, copys:null
 };
 
 /* =============== UTILS =============== */
@@ -2384,6 +2394,7 @@ const NAV=[
  {id:'gerador',l:'Gerador de vídeos IA',ic:'sparkles'},
  {id:'imagens',l:'Gerador de imagens IA',ic:'star'},
  {id:'free',l:'Gerar vídeos de graça',ic:'bolt'},
+ {id:'copygen',l:'Gerador de Copy',ic:'edit'},
  {id:'assistente',l:'Assistente IA',ic:'message'},
  {g:'Evolução'},
  {id:'metodo',l:'Método 2K Seguidores',ic:'grad'},
@@ -4827,6 +4838,164 @@ Quando pedirem roteiro, entregue em blocos com tempo (0-3s, 3-10s...). Quando pe
 Nunca sugira burlar regras do TikTok, comprar engajamento, automatizar publicações ou simular audiência. Se pedirem isso, ofereça o caminho legítimo.
 Não invente números de venda do usuário.`;
 const QUICK=['3 hooks para o produto que estou gravando','Roteiro de 30s para vídeo de venda','Legenda com hashtags para o meu nicho','Plano de conteúdo para a semana','Ideias de ângulo para produto de cozinha','Corrigir e encurtar este texto'];
+/* ---------- GERADOR DE COPY ---------- */
+const CG_QUICK=['Deixe mais persuasiva','Faça versão feminina','Crie uma versão POV','Crie uma versão UGC','Crie uma versão emocional'];
+VIEWS.copygen={title:'Gerador de Copy',sub:'Envie a foto do produto e receba a copy pronta para gravar',html(){
+ return `<div class="gen-wrap">
+  <div class="card pad">
+    <label class="dim" style="font-size:.74rem;display:block;margin-bottom:6px">Foto do produto</label>
+    <div class="cg-drop" id="cgDrop" onclick="document.getElementById('cgFile').click()">
+      ${S.cgImg?`<img src="${S.cgImg}" alt="">`
+               :`<div class="vi-load">${ico('box',22)}<span>Toque para enviar JPG, PNG ou WEBP</span></div>`}
+    </div>
+    <input type="file" id="cgFile" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="cgEnviarFoto(this)">
+
+    <label class="dim" style="font-size:.74rem;display:block;margin:14px 0 6px">Nome do produto</label>
+    <input class="input" id="cgNome" placeholder="Ex.: Kit 3 Bolsas Femininas" value="${escAttr(S.cgNome||'')}" oninput="S.cgNome=this.value">
+
+    <button class="btn btn-primary btn-block" style="margin-top:14px" id="cgBtn" onclick="gerarCopy()">${ico('edit',15)} GERAR COPY</button>
+
+    ${S.cgCopy?`
+    <div class="cg-result">
+      <div class="cg-box"><h4>Copy</h4><p>${escapeHTML(S.cgCopy)}</p>
+        <button class="btn btn-ghost btn-sm" onclick="copiarCG('copy')">${ico('copy',13)} Copiar copy</button></div>
+      <div class="cg-box"><h4>CTA</h4><p>${escapeHTML(S.cgCta)}</p>
+        <button class="btn btn-ghost btn-sm" onclick="copiarCG('cta')">${ico('copy',13)} Copiar CTA</button></div>
+      <button class="btn btn-ghost btn-sm" onclick="copiarCG('tudo')">${ico('copy',13)} Copiar tudo</button>
+    </div>
+    <div class="chat-log" id="cgChatLog" style="max-height:240px;margin-top:16px">${S.cgChat.map(m=>`<div class="msg ${m.role==='user'?'me':'ai'}">${escapeHTML(m.text)}</div>`).join('')}</div>
+    <div class="chiprow" style="padding:0 0 8px">${CG_QUICK.map((q,i)=>`<button class="chip" onclick="cgQuick(${i})">${q}</button>`).join('')}</div>
+    <div class="chat-in">
+      <textarea class="input" id="cgBox" rows="1" placeholder="Peça um ajuste na copy…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();cgSend()}"></textarea>
+      <button class="btn btn-primary" onclick="cgSend()" id="cgSendBtn">${ico('send',17)}</button>
+    </div>`:''}
+  </div>
+
+  <div class="card pad">
+    <div class="panel-head" style="padding:0 0 12px"><h3>Minhas copys</h3></div>
+    <div id="cgHist"><div class="empty"><h4>Carregando...</h4><p>Buscando suas copys.</p></div></div>
+  </div>
+ </div>`;
+},after(){ if(!S.apisCarregadas)carregarApis().then(()=>{S.apisCarregadas=true;}); carregarCopys(); }};
+
+async function cgEnviarFoto(input){
+ const f=input.files&&input.files[0]; if(!f)return;
+ if(SB.demo||!SB.uid){toast('Entre com a sua conta para enviar a foto');return;}
+ if(f.size>5*1024*1024){toast('Escolha uma imagem de até 5MB');return;}
+ const leitor=new FileReader();
+ leitor.onload=()=>{S.cgImg=leitor.result;const d=$('#cgDrop');if(d)d.innerHTML=`<img src="${leitor.result}" alt="">`;};
+ leitor.readAsDataURL(f);
+ try{
+   const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+   const caminho=`${SB.uid}/${crypto.randomUUID()}.${ext}`;
+   const r=await fetch(`${SB.url}/storage/v1/object/copys/${caminho}`,{
+     method:'POST',
+     headers:{'apikey':SB.key,'Authorization':'Bearer '+SB.token,'x-upsert':'true','Content-Type':f.type||'image/jpeg'},
+     body:f});
+   if(!r.ok)throw new Error(await r.text());
+   S.cgImg=`${SB.url}/storage/v1/object/public/copys/${caminho}`;
+ }catch(e){ toast('Não consegui enviar a foto agora'); }
+}
+
+function providerCG(){
+ const m=S.apis||{};
+ if(m.openai)return 'openai';
+ if(m.gemini)return 'gemini';
+ return '';
+}
+
+async function gerarCopy(){
+ if(S.cgBusy)return;
+ const nome=($('#cgNome')||{}).value?.trim()||S.cgNome?.trim();
+ if(!nome){toast('Informe o nome do produto');return;}
+ if(!S.cgImg||!S.cgImg.startsWith('http')){toast('Envie a foto do produto e aguarde o upload terminar');return;}
+ if(!S.apisCarregadas){await carregarApis();S.apisCarregadas=true;}
+ const provider=providerCG();
+ if(!provider){toast('Conecte a OpenAI ou o Gemini no Centro de APIs');nav('apis');return;}
+ S.cgNome=nome; S.cgProvider=provider; S.cgChat=[]; S.cgBusy=true;
+ const btn=$('#cgBtn'); if(btn){btn.disabled=true;btn.textContent='Gerando...';}
+ try{
+   const r=await fetch(SB.url+'/functions/v1/ia',{method:'POST',
+     headers:{'Content-Type':'application/json','apikey':SB.key,'Authorization':'Bearer '+(SB.token||'')},
+     body:JSON.stringify({acao:'gerar_copy',provider,nome,imagem_url:S.cgImg})});
+   const j=await r.json();
+   if(!r.ok||j.erro)throw new Error(j.erro||'Não consegui gerar a copy agora.');
+   S.cgCopy=j.copy; S.cgCta=j.cta;
+   carregarCopys();
+   toast('Copy gerada');
+ }catch(e){ toast(String(e.message).slice(0,90)); }
+ S.cgBusy=false; nav('copygen');
+}
+
+function cgQuick(i){$('#cgBox').value=CG_QUICK[i];cgSend();}
+
+async function cgSend(){
+ if(S.cgBusy)return;
+ const box=$('#cgBox'); const t=box.value.trim(); if(!t)return;
+ S.cgChat.push({role:'user',text:t}); box.value='';
+ S.cgBusy=true; renderCGChat(`<div class="msg ai typing"><span></span><span></span><span></span></div>`);
+ try{
+   const r=await fetch(SB.url+'/functions/v1/ia',{method:'POST',
+     headers:{'Content-Type':'application/json','apikey':SB.key,'Authorization':'Bearer '+(SB.token||'')},
+     body:JSON.stringify({acao:'gerar_copy',provider:S.cgProvider,nome:S.cgNome,imagem_url:S.cgImg,mensagens:S.cgChat})});
+   const j=await r.json();
+   if(!r.ok||j.erro)throw new Error(j.erro||'Não consegui atualizar a copy agora.');
+   S.cgCopy=j.copy; S.cgCta=j.cta;
+   S.cgChat.push({role:'assistant',text:'Copy e CTA atualizados acima ↑'});
+   carregarCopys();
+ }catch(e){
+   S.cgChat.push({role:'assistant',text:'Não consegui atualizar agora: '+String(e.message).slice(0,80)});
+ }
+ S.cgBusy=false; nav('copygen');
+}
+
+function renderCGChat(extra){
+ const log=$('#cgChatLog'); if(!log)return;
+ log.innerHTML=S.cgChat.map(m=>`<div class="msg ${m.role==='user'?'me':'ai'}">${escapeHTML(m.text)}</div>`).join('')+(extra||'');
+ log.scrollTop=log.scrollHeight;
+}
+
+function copiarCG(tipo){
+ if(tipo==='copy')copy(S.cgCopy,'Copy');
+ else if(tipo==='cta')copy(S.cgCta,'CTA');
+ else copy(`COPY:\n${S.cgCopy}\n\nCTA:\n${S.cgCta}`,'Copy e CTA');
+}
+
+async function carregarCopys(){
+ try{ S.copys=await SB.get('generated_copies?select=*&order=created_at.desc&limit=60')||[]; }
+ catch(e){ S.copys=[]; }
+ pintarCopys();
+}
+
+function pintarCopys(){
+ const box=$('#cgHist'); if(!box)return;
+ const lista=(S.copys||[]).filter(v=>v.copy_texto);
+ if(!lista.length){
+   box.innerHTML=`<div class="empty"><h4>Nada gerado ainda</h4><p>Suas copys aparecem aqui.</p></div>`;
+   return;
+ }
+ box.innerHTML=`<div class="img-grid">${lista.map(v=>`
+   <div class="img-item">
+     <div class="ii-stage">${v.imagem_url?`<img src="${v.imagem_url}" alt="" loading="lazy">`:''}</div>
+     <div class="ii-body">
+       <p><b>${escapeHTML(v.produto||'')}</b><br>${escapeHTML((v.copy_texto||'').slice(0,90))}</p>
+       <small>${new Date(v.created_at).toLocaleDateString('pt-BR')}</small>
+       <div class="ii-acts">
+         <button class="icon-btn" title="Copiar copy" onclick="copy(${JSON.stringify(v.copy_texto||'').replace(/"/g,'&quot;')},'Copy')">${ico('copy',14)}</button>
+         <button class="icon-btn" title="Copiar CTA" onclick="copy(${JSON.stringify(v.cta_texto||'').replace(/"/g,'&quot;')},'CTA')">${ico('send',14)}</button>
+         <button class="icon-btn" title="Excluir" onclick="excluirCopy('${v.id}')">${ico('x',14)}</button>
+       </div>
+     </div>
+   </div>`).join('')}</div>`;
+ paintIcons(box);
+}
+
+async function excluirCopy(id){
+ try{ await SB.del('generated_copies','id=eq.'+id);
+      S.copys=(S.copys||[]).filter(x=>x.id!==id); pintarCopys(); toast('Copy excluída'); }
+ catch(e){ toast('Não consegui excluir agora'); }
+}
+
 VIEWS.assistente={title:'Assistente IA',sub:'Roteiro, hook, copy e estratégia dentro da plataforma',html(){
  return `<div class="card chat">
    <div class="chat-log" id="chatLog">${S.chat.length?S.chat.map(m=>`<div class="msg ${m.role==='user'?'me':'ai'}">${escapeHTML(m.text)}</div>`).join(''):`
