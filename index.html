@@ -44,7 +44,7 @@ main{position:relative;z-index:1}
 .nav.stuck{background:rgba(13,13,13,.72);backdrop-filter:blur(16px);border-color:var(--line);
   box-shadow:0 10px 40px rgba(0,0,0,.5)}
 .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1.02rem}
-.brand svg{width:30px;height:30px;filter:drop-shadow(0 0 12px rgba(59,130,246,.55))}
+.brand img.logo-mark{width:30px;height:30px;border-radius:22%;display:block;filter:drop-shadow(0 0 12px rgba(59,130,246,.55))}
 .brand span b{color:var(--blue-hi);font-weight:700}
 .nav-links{display:flex;gap:26px;margin-left:auto;font-size:.9rem;color:var(--txt-2)}
 .nav-links a:hover{color:var(--white)}
@@ -327,7 +327,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:40px}
 
 <nav class="nav" id="nav">
   <a href="#topo" class="brand">
-    <svg><use href="#logo"/></svg>
+    <img class="logo-mark" src="logo.png" alt="PromptVerse">
     <span>PromptVerse<b> 2.0</b></span>
   </a>
   <div class="nav-links">
@@ -431,7 +431,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:40px}
           <h3>PromptVerse 2.0 <span class="pop">1 ANO DE ACESSO</span></h3>
           <p class="sub">Um ano inteiro de plataforma, com tudo incluído.</p>
           <div class="price"><span class="v">R$ 27,90</span></div>
-          <p class="alt">ou R$ 197,00 à vista</p>
+          <p class="alt">R$ 27,90 à vista</p>
           <ul class="feats">
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Central de produtos virais</li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Criar modelo</li>
@@ -488,7 +488,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:40px}
   <footer>
     <div class="wrap foot">
       <div>
-        <a href="#topo" class="brand"><svg><use href="#logo"/></svg><span>PromptVerse<b> 2.0</b></span></a>
+        <a href="#topo" class="brand"><img class="logo-mark" src="logo.png" alt="PromptVerse"><span>PromptVerse<b> 2.0</b></span></a>
         <p>Produtos, prompts e geração de vídeo e imagem com IA para quem vende no TikTok Shop sem aparecer na câmera.</p>
       </div>
     </div>
