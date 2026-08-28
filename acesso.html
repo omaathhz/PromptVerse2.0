@@ -86,7 +86,7 @@ p{margin:0}
 .badge-soft{background:rgba(248,250,252,.06);color:var(--txt-2);border:1px solid var(--line)}
 .badge-green{background:rgba(34,197,94,.13);color:#6ee7a8;border:1px solid rgba(34,197,94,.28)}
 
-.logo-mark{width:34px;height:34px;flex:none}
+.logo-mark{width:34px;height:34px;flex:none;border-radius:22%;display:block;object-fit:cover}
 .logo-lockup{display:flex;align-items:center;gap:10px}
 .logo-word{font-family:var(--display);font-weight:800;font-size:1.06rem;letter-spacing:-.03em}
 .logo-word span{color:var(--blue-hi);font-weight:600}
@@ -219,10 +219,11 @@ footer{border-top:1px solid var(--line);padding:36px 0;color:var(--txt-3);font-s
 .foot-in{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
 
 /* ===== AUTH ===== */
-.auth{min-height:100vh;display:grid;place-items:center;padding:28px 0;position:relative;z-index:1;overflow:hidden}
-.auth::before,.auth::after{content:"";position:absolute;border-radius:50%;filter:blur(110px);z-index:-1;pointer-events:none}
-.auth::before{width:70vw;height:70vw;max-width:640px;max-height:640px;background:radial-gradient(circle,rgba(37,99,235,.4),transparent 65%);top:-18%;right:-22%}
-.auth::after{width:60vw;height:60vw;max-width:560px;max-height:560px;background:radial-gradient(circle,rgba(8,31,92,1),transparent 68%);bottom:-16%;left:-20%;opacity:.85}
+.auth{min-height:100vh;display:grid;place-items:center;padding:28px 0;position:relative;z-index:1;
+  background:radial-gradient(ellipse 90% 60% at 50% 0%,rgba(37,99,235,.16),transparent 70%)}
+.auth::before,.auth::after{content:"";position:fixed;border-radius:50%;filter:blur(85px);z-index:-1;pointer-events:none}
+.auth::before{width:75vw;height:75vw;max-width:680px;max-height:680px;background:radial-gradient(circle,rgba(37,99,235,.62),transparent 68%);top:-14vw;right:-18vw}
+.auth::after{width:65vw;height:65vw;max-width:600px;max-height:600px;background:radial-gradient(circle,rgba(8,31,92,1),transparent 68%);bottom:-14vw;left:-16vw}
 .auth-card{width:min(430px,100%);padding:30px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:.78rem;color:var(--txt-2);margin-bottom:6px;font-weight:500}
@@ -890,7 +891,7 @@ html{overflow-x:hidden}
   <nav class="nav" id="nav">
     <div class="wrap nav-in">
       <a href="#" class="logo-lockup" onclick="go('site');return false">
-        <svg class="logo-mark"><use href="#logo"/></svg>
+        <img class="logo-mark" src="logo.png" alt="PromptVerse">
         <span class="logo-word">PromptVerse<span> 2.0</span></span>
       </a>
       <div class="nav-links">
@@ -1135,7 +1136,7 @@ html{overflow-x:hidden}
   <section class="section" style="padding-top:0">
     <div class="wrap">
       <div class="final reveal">
-        <svg class="logo-mark" style="width:52px;height:52px;margin:0 auto 18px"><use href="#logo"/></svg>
+        <img class="logo-mark" style="width:52px;height:52px;margin:0 auto 18px" src="logo.png" alt="PromptVerse">
         <h2>Comece pelo próximo vídeo, não pela próxima segunda-feira.</h2>
         <p class="lead" style="max-width:520px;margin:14px auto 26px">Crie o modelo, pegue o roteiro e publique hoje. A chave de acesso chega no seu e-mail assim que a compra é aprovada.</p>
         <button class="btn btn-primary" onclick="buy('Lifetime')">Quero o acesso vitalício — R$ 297</button>
@@ -1147,7 +1148,7 @@ html{overflow-x:hidden}
 
   <footer>
     <div class="wrap foot-in">
-      <div class="logo-lockup"><svg class="logo-mark" style="width:26px;height:26px"><use href="#logo"/></svg>
+      <div class="logo-lockup"><img class="logo-mark" style="width:26px;height:26px" src="logo.png" alt="PromptVerse">
         <span class="logo-word" style="font-size:.92rem">PromptVerse<span> 2.0</span></span></div>
       <p>Ferramenta independente de apoio a criadores. Não é afiliada ao TikTok e não automatiza, simula engajamento nem contorna regras da plataforma.</p>
       <p>© 2026 PromptVerse</p>
@@ -1160,7 +1161,7 @@ html{overflow-x:hidden}
   <div class="auth">
     <div class="wrap" style="max-width:460px">
       <div style="text-align:center;margin-bottom:22px">
-        <svg class="logo-mark" style="width:48px;height:48px;margin:0 auto 14px"><use href="#logo"/></svg>
+        <img class="logo-mark" style="width:48px;height:48px;margin:0 auto 14px" src="logo.png" alt="PromptVerse">
         <h2 style="font-size:1.5rem" id="authTitle">Entrar na plataforma</h2>
         <p class="dim" style="margin-top:8px" id="authSub">Use o e-mail da compra e a senha que você criou.</p>
       </div>
@@ -1242,7 +1243,7 @@ html{overflow-x:hidden}
   <div class="app">
     <aside class="side" id="side">
       <div class="logo-lockup" style="padding:0 8px">
-        <svg class="logo-mark"><use href="#logo"/></svg>
+        <img class="logo-mark" src="logo.png" alt="PromptVerse">
         <span class="logo-word">PromptVerse<span> 2.0</span></span>
       </div>
       <button class="icon-btn side-close" id="sideClose" aria-label="Fechar menu"><i data-ic="x"></i></button>
@@ -5022,7 +5023,7 @@ VIEWS.assistente={title:'Assistente IA',sub:'Roteiro, hook, copy e estratégia d
  return `<div class="card chat">
    <div class="chat-log" id="chatLog">${S.chat.length?S.chat.map(m=>`<div class="msg ${m.role==='user'?'me':'ai'}">${escapeHTML(m.text)}</div>`).join(''):`
      <div style="margin:auto;text-align:center;max-width:460px">
-       <svg class="logo-mark" style="width:46px;height:46px;margin:0 auto 14px"><use href="#logo"/></svg>
+       <img class="logo-mark" style="width:46px;height:46px;margin:0 auto 14px" src="logo.png" alt="PromptVerse">
        <h3 style="margin-bottom:8px">Em que a gente mexe primeiro?</h3>
        <p class="dim" style="margin-bottom:18px">Peça um roteiro, um hook ou um plano de conteúdo. Se já tem um modelo salvo no Studio, pode pedir o vídeo em cima dele.</p>
      </div>`}</div>
