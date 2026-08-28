@@ -219,7 +219,10 @@ footer{border-top:1px solid var(--line);padding:36px 0;color:var(--txt-3);font-s
 .foot-in{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
 
 /* ===== AUTH ===== */
-.auth{min-height:100vh;display:grid;place-items:center;padding:28px 0;position:relative;z-index:1}
+.auth{min-height:100vh;display:grid;place-items:center;padding:28px 0;position:relative;z-index:1;overflow:hidden}
+.auth::before,.auth::after{content:"";position:absolute;border-radius:50%;filter:blur(110px);z-index:-1;pointer-events:none}
+.auth::before{width:70vw;height:70vw;max-width:640px;max-height:640px;background:radial-gradient(circle,rgba(37,99,235,.4),transparent 65%);top:-18%;right:-22%}
+.auth::after{width:60vw;height:60vw;max-width:560px;max-height:560px;background:radial-gradient(circle,rgba(8,31,92,1),transparent 68%);bottom:-16%;left:-20%;opacity:.85}
 .auth-card{width:min(430px,100%);padding:30px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:.78rem;color:var(--txt-2);margin-bottom:6px;font-weight:500}
@@ -1171,6 +1174,10 @@ html{overflow-x:hidden}
           <label for="authKey">Senha</label>
           <input class="input mono" id="authKey" type="password" placeholder="sua senha" autocomplete="current-password">
         </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:2px 0 14px;font-size:.86rem;color:var(--txt-2);cursor:pointer">
+          <input type="checkbox" id="manterConexao" checked style="width:16px;height:16px;accent-color:var(--blue)">
+          Manter conexão
+        </label>
         <p id="authErr" class="hide" style="color:#f8a3a3;font-size:.82rem;margin-bottom:12px"></p>
         <button class="btn btn-primary btn-block" id="loginBtn" onclick="login()">Entrar</button>
         <p class="auth-alt">Perdeu a chave? <button onclick="showRecover(true)">Recuperar acesso</button></p>
@@ -1281,7 +1288,7 @@ html{overflow-x:hidden}
 const SB={
   url:'https://glpurtkizqbjfqfqwfwh.supabase.co',
   key:'sb_publishable_JqdnWFRj4S20kVZktXWTZw_fNxBXuHD',
-  token:null, uid:null, demo:false,
+  token:null, uid:null, refreshToken:null, demo:false,
   head(){const x={'apikey':this.key,'Content-Type':'application/json'};
     x['Authorization']='Bearer '+(this.token||this.key);return x;},
   async signIn(email,senha){
@@ -1290,7 +1297,15 @@ const SB={
        body:JSON.stringify({email,password:senha})});
     const d=await r.json();
     if(!r.ok)throw new Error(d.error_description||d.msg||d.message||'Falha no login');
-    this.token=d.access_token; this.uid=d.user&&d.user.id; return d;
+    this.token=d.access_token; this.uid=d.user&&d.user.id; this.refreshToken=d.refresh_token; return d;
+  },
+  async restaurar(refreshToken){
+    const r=await fetch(this.url+'/auth/v1/token?grant_type=refresh_token',
+      {method:'POST',headers:{'apikey':this.key,'Content-Type':'application/json'},
+       body:JSON.stringify({refresh_token:refreshToken})});
+    const d=await r.json();
+    if(!r.ok)return false;
+    this.token=d.access_token; this.uid=d.user&&d.user.id; this.refreshToken=d.refresh_token; return true;
   },
   async recover(email){
     const r=await fetch(this.url+'/auth/v1/recover',
@@ -1424,7 +1439,7 @@ const S={
   favProducts:new Set(['p2']), favPrompts:new Set(),
   prompts:[], promptHistory:[], savedModels:[], chat:[], busy:false,
   genImg:null, kpi:null, vendas:null, seguidores:null, notifs:null, licenseKey:null, bonus:[], bonusTotal:29, promptCat:'Prompts para Imagens', toolCat:'Todas', prodCat:'Todos', prodSearch:'', prodPage:1, prodPage:1, ganFmt:'Todos', apisCarregadas:false, apis:{},
-  cgImg:'', cgNome:'', cgProvider:'', cgCopy:'', cgCta:'', cgChat:[], cgBusy:false, copys:null
+  cgImg:'', cgNome:'', cgProvider:'', cgCopy:'', cgCta:'', cgChat:[], cgBusy:false, copys:null, cgGenImg:'', cgGenNome:''
 };
 
 /* =============== UTILS =============== */
@@ -1653,6 +1668,11 @@ async function login(){
   try{
     await SB.signIn(mail,key);
     SB.demo=false;
+    try{
+      if($('#manterConexao')&&$('#manterConexao').checked){
+        localStorage.setItem('pv2_sessao',JSON.stringify({refresh_token:SB.refreshToken}));
+      }else{ localStorage.removeItem('pv2_sessao'); }
+    }catch(e){}
     await carregarDados();
     go('app');mountApp();
   }catch(e){
@@ -1672,7 +1692,7 @@ async function recover(){
   catch(e){ toast('Não consegui enviar agora. Confira o e-mail e tente de novo.'); }
   showRecover(false);
 }
-function logout(){S.chat=[];SB.token=null;SB.uid=null;go('site');toast('Você saiu da plataforma');}
+function logout(){S.chat=[];SB.token=null;SB.uid=null;SB.refreshToken=null;try{localStorage.removeItem('pv2_sessao');}catch(e){}go('site');toast('Você saiu da plataforma');}
 </script>
 
 <script>
@@ -4921,6 +4941,8 @@ async function gerarCopy(){
    const j=await r.json();
    if(!r.ok||j.erro)throw new Error(j.erro||'Não consegui gerar a copy agora.');
    S.cgCopy=j.copy; S.cgCta=j.cta;
+   S.cgGenImg=S.cgImg; S.cgGenNome=nome;
+   S.cgImg=''; S.cgNome='';
    carregarCopys();
    toast('Copy gerada');
  }catch(e){ toast(String(e.message).slice(0,90)); }
@@ -4937,7 +4959,7 @@ async function cgSend(){
  try{
    const r=await fetch(SB.url+'/functions/v1/ia',{method:'POST',
      headers:{'Content-Type':'application/json','apikey':SB.key,'Authorization':'Bearer '+(SB.token||'')},
-     body:JSON.stringify({acao:'gerar_copy',provider:S.cgProvider,nome:S.cgNome,imagem_url:S.cgImg,mensagens:S.cgChat})});
+     body:JSON.stringify({acao:'gerar_copy',provider:S.cgProvider,nome:S.cgGenNome,imagem_url:S.cgGenImg,mensagens:S.cgChat})});
    const j=await r.json();
    if(!r.ok||j.erro)throw new Error(j.erro||'Não consegui atualizar a copy agora.');
    S.cgCopy=j.copy; S.cgCta=j.cta;
@@ -5365,7 +5387,23 @@ paintIcons(document.getElementById('screen-auth'));
 checkLinkSenhaBoot();
 function checkLinkSenhaBoot(){
   try{ if(checarLinkDeSenha())return; }catch(e){}
-  try{ abrirAcesso(); }catch(e){}
+  tentarSessaoSalva().then(ok=>{ if(!ok){ try{ abrirAcesso(); }catch(e){} } });
+}
+async function tentarSessaoSalva(){
+  let salva; try{ salva=JSON.parse(localStorage.getItem('pv2_sessao')||'null'); }catch(e){ salva=null; }
+  if(!salva||!salva.refresh_token)return false;
+  try{
+    const ok=await SB.restaurar(salva.refresh_token);
+    if(!ok)throw new Error('sessão expirada');
+    SB.demo=false;
+    localStorage.setItem('pv2_sessao',JSON.stringify({refresh_token:SB.refreshToken}));
+    await carregarDados();
+    go('app');mountApp();
+    return true;
+  }catch(e){
+    try{ localStorage.removeItem('pv2_sessao'); }catch(_){}
+    return false;
+  }
 }
 /* este arquivo é só a área de acesso: abre direto no criar acesso */
 function abrirAcesso(){
