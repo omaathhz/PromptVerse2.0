@@ -5034,7 +5034,7 @@ VIEWS.assistente={title:'Assistente IA',sub:'Roteiro, hook, copy e estratégia d
    </div>
  </div>
  <p class="dim" style="margin-top:10px;text-align:center">O assistente escreve textos e ideias. Ele não publica, não transmite e não acessa sua conta do TikTok.</p>`;
-},after(){const l=$('#chatLog');if(l)l.scrollTop=l.scrollHeight;}};
+},after(){const l=$('#chatLog');if(l)l.scrollTop=l.scrollHeight;if(!S.apisCarregadas)carregarApis().then(()=>{S.apisCarregadas=true;});}};
 function escapeHTML(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
 function quick(q){$('#chatBox').value=q;sendChat();}
 function quickIdx(i){$('#chatBox').value=QUICK[i];sendChat();}
@@ -5053,16 +5053,17 @@ async function sendChat(preloaded){
  }
  S.busy=true;renderChat(`<div class="msg ai typing"><span></span><span></span><span></span></div>`);
  try{
-   const res=await fetch("https://api.anthropic.com/v1/messages",{
-     method:"POST",headers:{"Content-Type":"application/json"},
-     body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:SYS,
-       messages:S.chat.map(m=>({role:m.role,content:m.text}))})
-   });
-   const data=await res.json();
-   const text=(data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n').trim();
-   S.chat.push({role:'assistant',text:text||'Não veio resposta desta vez. Manda de novo com mais contexto do produto.'});
+   if(!S.apisCarregadas){await carregarApis();S.apisCarregadas=true;}
+   const provider=providerCG();
+   if(!provider)throw new Error('Conecte a OpenAI ou o Gemini no Centro de APIs para usar o assistente.');
+   const r=await fetch(SB.url+'/functions/v1/ia',{method:'POST',
+     headers:{'Content-Type':'application/json','apikey':SB.key,'Authorization':'Bearer '+(SB.token||'')},
+     body:JSON.stringify({acao:'chat_texto',provider,sistema:SYS,mensagens:S.chat})});
+   const data=await r.json();
+   if(!r.ok||data.erro)throw new Error(data.erro||'Não veio resposta desta vez.');
+   S.chat.push({role:'assistant',text:data.texto||'Não veio resposta desta vez. Manda de novo com mais contexto do produto.'});
  }catch(e){
-   S.chat.push({role:'assistant',text:'A conexão com o assistente falhou agora. Verifique a internet e tente de novo — sua conversa continua salva aqui.'});
+   S.chat.push({role:'assistant',text:String(e.message||'A conexão com o assistente falhou agora. Verifique a internet e tente de novo — sua conversa continua salva aqui.')});
  }
  S.busy=false;renderChat();
 }
