@@ -506,6 +506,15 @@ button,a,.chip,.tab,.nv{-webkit-tap-highlight-color:rgba(59,130,246,.28);touch-a
 .cg-box h4{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
   color:var(--blue-hi);margin:0 0 8px}
 .cg-box p{margin:0 0 10px;font-size:.86rem;line-height:1.55;color:var(--txt-2)}
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.scenario-card{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:var(--glass);
+  transition:.2s;display:flex;flex-direction:column}
+.scenario-card:hover{border-color:var(--line-2)}
+.scenario-img{aspect-ratio:3/4;background:#0D0D0D;position:relative;overflow:hidden}
+.scenario-img img{width:100%;height:100%;object-fit:cover;display:block}
+.scenario-body{padding:13px;display:flex;flex-direction:column;gap:8px;flex:1}
+.scenario-body h4{font-size:.92rem;margin:0}
+.scenario-body p{font-size:.78rem;color:var(--txt-3);margin:0;line-height:1.4;flex:1}
 .ii-fav{position:absolute;top:7px;right:7px;width:27px;height:27px;border-radius:50%;
   border:1px solid var(--line);background:rgba(13,13,13,.72);color:var(--txt-3);
   display:grid;place-items:center;cursor:pointer;padding:0}
@@ -1426,7 +1435,8 @@ const ICONS={
  link:'<path d="M10 14a4 4 0 006 .5l2-2a4 4 0 10-5.7-5.7L11 8"/><path d="M14 10a4 4 0 00-6-.5l-2 2A4 4 0 109.7 17L11 16"/>',
  fire:'<path d="M12 3s5 4 5 9a5 5 0 01-10 0c0-2 1-3 1-3s1 1.5 2 1.5S12 6 12 3z"/>',
  dl:'<path d="M12 4v11M7 11l5 5 5-5"/><path d="M5 20h14"/>',
- refresh:'<path d="M20 11a8 8 0 10-2 6"/><path d="M20 5v6h-6"/>'
+ refresh:'<path d="M20 11a8 8 0 10-2 6"/><path d="M20 5v6h-6"/>',
+ img:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-4 4-3-3-5 5"/>'
 };
 function ico(n,sz=18){return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]||''}</svg>`}
 function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(el=>{
@@ -1440,7 +1450,8 @@ const S={
   favProducts:new Set(['p2']), favPrompts:new Set(),
   prompts:[], promptHistory:[], savedModels:[], chat:[], busy:false,
   genImg:null, kpi:null, vendas:null, seguidores:null, notifs:null, licenseKey:null, bonus:[], bonusTotal:29, promptCat:'Prompts para Imagens', toolCat:'Todas', prodCat:'Todos', prodSearch:'', prodPage:1, prodPage:1, ganFmt:'Todos', apisCarregadas:false, apis:{},
-  cgImg:'', cgNome:'', cgProvider:'', cgCopy:'', cgCta:'', cgChat:[], cgBusy:false, copys:null, cgGenImg:'', cgGenNome:''
+  cgImg:'', cgNome:'', cgProvider:'', cgCopy:'', cgCta:'', cgChat:[], cgBusy:false, copys:null, cgGenImg:'', cgGenNome:'',
+  cenTab:'pov', cenSearch:''
 };
 
 /* =============== UTILS =============== */
@@ -2409,6 +2420,7 @@ const NAV=[
  {id:'prompts',l:'Biblioteca de prompts',ic:'book'},
  {id:'bonus',l:'Prompts bônus',ic:'star'},
  {id:'ugc',l:'Prompt Modelo UGC',ic:'video'},
+ {id:'cenario',l:'Cenário',ic:'img'},
  {id:'modelos',l:'Modelos para modelar',ic:'user'},
  {id:'ganchos',l:'Ganchos virais',ic:'fire'},
  {id:'apis',l:'Centro de APIs',ic:'lock'},
@@ -4859,6 +4871,122 @@ Quando pedirem roteiro, entregue em blocos com tempo (0-3s, 3-10s...). Quando pe
 Nunca sugira burlar regras do TikTok, comprar engajamento, automatizar publicações ou simular audiência. Se pedirem isso, ofereça o caminho legítimo.
 Não invente números de venda do usuário.`;
 const QUICK=['3 hooks para o produto que estou gravando','Roteiro de 30s para vídeo de venda','Legenda com hashtags para o meu nicho','Plano de conteúdo para a semana','Ideias de ângulo para produto de cozinha','Corrigir e encurtar este texto'];
+/* ---------- CENÁRIO ---------- */
+/* estrutura pronta para receber as imagens depois: {id, titulo, descricao, imagem, categoria} */
+const CENARIO_POV=[
+ {id:1,imagem:'cenarios/pov1.jpg'},
+ {id:2,imagem:'cenarios/pov2.jpg'},
+ {id:3,imagem:'cenarios/pov3.jpg'},
+ {id:4,imagem:'cenarios/pov4.jpg'},
+ {id:5,imagem:'cenarios/pov5.jpg'},
+ {id:6,imagem:'cenarios/pov6.jpg'},
+ {id:7,imagem:'cenarios/pov7.jpg'},
+ {id:8,imagem:'cenarios/pov8.jpg'},
+ {id:9,imagem:'cenarios/pov9.jpg'},
+ {id:10,imagem:'cenarios/pov10.jpg'},
+ {id:11,imagem:'cenarios/pov11.jpg'},
+ {id:12,imagem:'cenarios/pov12.jpg'},
+ {id:13,imagem:'cenarios/pov13.jpg'},
+ {id:14,imagem:'cenarios/pov14.jpg'},
+ {id:15,imagem:'cenarios/pov15.jpg'},
+ {id:16,imagem:'cenarios/pov16.jpg'},
+ {id:17,imagem:'cenarios/pov17.jpg'},
+ {id:18,imagem:'cenarios/pov18.jpg'},
+ {id:19,imagem:'cenarios/pov19.jpg'},
+ {id:20,imagem:'cenarios/pov20.jpg'},
+ {id:21,imagem:'cenarios/pov21.jpg'},
+ {id:22,imagem:'cenarios/pov22.jpg'},
+ {id:23,imagem:'cenarios/pov23.jpg'},
+ {id:24,imagem:'cenarios/pov24.jpg'},
+ {id:25,imagem:'cenarios/pov25.jpg'},
+ {id:26,imagem:'cenarios/pov26.jpg'},
+ {id:27,imagem:'cenarios/pov27.jpg'}
+];
+const CENARIO_UGC=[
+ {id:1,imagem:'cenarios/ugc1.jpg'},
+ {id:2,imagem:'cenarios/ugc2.jpg'},
+ {id:3,imagem:'cenarios/ugc3.jpg'},
+ {id:4,imagem:'cenarios/ugc4.jpg'},
+ {id:5,imagem:'cenarios/ugc5.jpg'},
+ {id:6,imagem:'cenarios/ugc6.jpg'},
+ {id:7,imagem:'cenarios/ugc7.jpg'},
+ {id:8,imagem:'cenarios/ugc8.jpg'},
+ {id:9,imagem:'cenarios/ugc9.jpg'},
+ {id:10,imagem:'cenarios/ugc10.jpg'},
+ {id:11,imagem:'cenarios/ugc11.jpg'},
+ {id:12,imagem:'cenarios/ugc12.jpg'},
+ {id:13,imagem:'cenarios/ugc13.jpg'},
+ {id:14,imagem:'cenarios/ugc14.jpg'},
+ {id:15,imagem:'cenarios/ugc15.jpg'},
+ {id:16,imagem:'cenarios/ugc16.jpg'},
+ {id:17,imagem:'cenarios/ugc17.jpg'},
+ {id:18,imagem:'cenarios/ugc18.jpg'},
+ {id:19,imagem:'cenarios/ugc19.jpg'},
+ {id:20,imagem:'cenarios/ugc20.jpg'},
+ {id:21,imagem:'cenarios/ugc21.jpg'},
+ {id:22,imagem:'cenarios/ugc22.jpg'},
+ {id:23,imagem:'cenarios/ugc23.jpg'},
+ {id:24,imagem:'cenarios/ugc24.jpg'},
+ {id:25,imagem:'cenarios/ugc25.jpg'},
+ {id:26,imagem:'cenarios/ugc26.jpg'},
+ {id:27,imagem:'cenarios/ugc27.jpg'},
+ {id:28,imagem:'cenarios/ugc28.jpg'},
+ {id:29,imagem:'cenarios/ugc29.jpg'},
+ {id:30,imagem:'cenarios/ugc30.jpg'},
+ {id:31,imagem:'cenarios/ugc31.jpg'},
+ {id:32,imagem:'cenarios/ugc32.jpg'}
+];
+VIEWS.cenario={title:'Cenário',sub:'Encontre cenários prontos para criar seus conteúdos com IA.',html(){
+ return `<div class="card pad">
+  <p class="dim" style="margin-bottom:18px">Escolha um cenário, baixe a imagem e utilize como referência para criar seus vídeos e imagens em ferramentas de IA.</p>
+  <div class="tabs">
+    <button class="tab ${S.cenTab==='pov'?'on':''}" onclick="cenTab('pov')">Cenário POV</button>
+    <button class="tab ${S.cenTab==='ugc'?'on':''}" onclick="cenTab('ugc')">Cenário UGC</button>
+  </div>
+  <div class="field">
+    <input class="input" id="cenBusca" placeholder="Pesquisar cenário..." value="${escAttr(S.cenSearch||'')}" oninput="cenBuscar(this.value)">
+  </div>
+  <p class="dim" style="margin:-4px 0 16px;font-size:.82rem">${S.cenTab==='pov'?'Cenários para criar conteúdos no estilo POV utilizando IA.':'Cenários para criar conteúdos no estilo UGC utilizando IA.'}</p>
+  <div id="cenGrid"></div>
+ </div>`;
+},after(){ pintarCenarios(); }};
+
+function cenTab(tab){ S.cenTab=tab; S.cenSearch=''; nav('cenario'); }
+function cenBuscar(v){ S.cenSearch=v; pintarCenarios(); }
+
+function pintarCenarios(){
+ const box=$('#cenGrid'); if(!box)return;
+ const fonte=S.cenTab==='pov'?CENARIO_POV:CENARIO_UGC;
+ const busca=(S.cenSearch||'').toLowerCase().trim();
+ const lista=fonte.filter(c=>!busca||(c.titulo||'').toLowerCase().includes(busca));
+ if(!lista.length){
+   box.innerHTML=busca
+     ?`<div class="empty"><h4>Nada encontrado</h4><p>Tenta buscar por outro nome de cenário.</p></div>`
+     :`<div class="empty"><h4>Seus cenários aparecerão aqui</h4><p>Em breve você poderá encontrar diversos cenários ${S.cenTab==='pov'?'POV':'UGC'} para criar seus conteúdos com IA.</p></div>`;
+   return;
+ }
+ box.innerHTML=`<div class="scenario-grid">${lista.map((c,i)=>`
+   <div class="scenario-card">
+     <div class="scenario-img">${c.imagem?`<img src="${c.imagem}" alt="Cenário" loading="lazy">`:''}</div>
+     <div class="scenario-body">
+       <button class="btn btn-ghost btn-sm btn-block" onclick="baixarCenario('${escAttr(c.imagem||'')}','${escAttr(c.titulo||('cenario-'+S.cenTab+'-'+(i+1)))}')">${ico('dl',14)} Baixar</button>
+     </div>
+   </div>`).join('')}</div>`;
+ paintIcons(box);
+}
+
+async function baixarCenario(url,nome){
+ if(!url){toast('Imagem indisponível');return;}
+ const arquivo=(nome||'cenario').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9-_]+/g,'_').toLowerCase()||'cenario';
+ try{
+   const r=await fetch(url); const blob=await r.blob();
+   const obj=URL.createObjectURL(blob);
+   const a=document.createElement('a'); a.href=obj; a.download=arquivo+'.jpg';
+   document.body.appendChild(a); a.click(); a.remove();
+   setTimeout(()=>URL.revokeObjectURL(obj),4000);
+ }catch(e){ window.open(url,'_blank'); }
+}
+
 /* ---------- GERADOR DE COPY ---------- */
 const CG_QUICK=['Deixe mais persuasiva','Faça versão feminina','Crie uma versão POV','Crie uma versão UGC','Crie uma versão emocional'];
 VIEWS.copygen={title:'Gerador de Copy',sub:'Envie a foto do produto e receba a copy pronta para gravar',html(){
