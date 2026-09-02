@@ -1716,7 +1716,7 @@ async function recover(){
   catch(e){ toast('Não consegui enviar agora. Confira o e-mail e tente de novo.'); }
   showRecover(false);
 }
-function logout(){S.chat=[];SB.token=null;SB.uid=null;SB.refreshToken=null;try{localStorage.removeItem('pv2_sessao');}catch(e){}go('site');toast('Você saiu da plataforma');}
+function logout(){S.chat=[];SB.token=null;SB.uid=null;SB.refreshToken=null;try{localStorage.removeItem('pv2_sessao');}catch(e){}go('auth');try{showClaim(false);const k=$('#authKey');if(k)k.value='';}catch(e){}toast('Você saiu da plataforma');}
 </script>
 
 <script>
