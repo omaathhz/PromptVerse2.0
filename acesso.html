@@ -1380,6 +1380,15 @@ async function carregarDados(){
     SB.get('ai_models?user_id=eq.'+uid+'&order=created_at.desc&select=*').catch(()=>[])
   ]);
   const p=perfil[0]||{};
+
+  // sem licenca ativa (nunca comprou, expirou ou foi reembolsada/cancelada):
+  // barra o acesso aqui, mesmo com senha valida.
+  if(!lic || !lic.length){
+    const erro=new Error('sem_licenca_ativa');
+    erro.semLicenca=true;
+    throw erro;
+  }
+
   S.user.name=p.name||S.user.name;
   S.user.email=p.email||S.user.email;
   S.user.handle=p.tiktok_handle||S.user.handle;
@@ -1387,6 +1396,8 @@ async function carregarDados(){
   if(pl)S.user.plan=pl.charAt(0).toUpperCase()+pl.slice(1);
   S.user.initials=(S.user.name||'PV').replace(/[^a-zA-ZÀ-ÿ ]/g,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'PV';
   S.licenseKey=(lic[0]&&lic[0].license_key)||null;
+  S.licenseCreated=(lic[0]&&lic[0].created_at)||null;
+  S.licenseExpires=(lic[0]&&lic[0].expires_at)||null;
 
   const aprovadas=vendas.filter(v=>v.status==='approved');
   if(vendas.length){
@@ -1700,6 +1711,14 @@ async function login(){
     await carregarDados();
     go('app');mountApp();
   }catch(e){
+    if(e && e.semLicenca){
+      try{ localStorage.removeItem('pv2_sessao'); }catch(_){}
+      SB.token=null; SB.uid=null; SB.refreshToken=null;
+      err.textContent='Este e-mail não tem um acesso ativo no momento (compra expirada, cancelada ou reembolsada). Fale com o suporte se acha que isso é um engano.';
+      err.classList.remove('hide');
+      if(btn){btn.disabled=false;btn.textContent='Entrar';}
+      return;
+    }
     {
       const semRede = (e && (e.name==='TypeError' || /fetch|network|Load failed/i.test(e.message||'')));
       err.textContent = semRede
@@ -5434,9 +5453,11 @@ VIEWS.conta={title:'Minha conta',sub:'Perfil, plano e segurança',html(){
      <div class="panel-head"><h3>Histórico</h3></div>
      <div class="panel-body scroll-x">
        <table class="data" style="min-width:380px"><thead><tr><th>Data</th><th>Evento</th><th>Valor</th></tr></thead><tbody>
-       ${[['12/06/2026','Compra do plano Lifetime','R$ 297,00'],['12/06/2026','Chave de acesso enviada','—'],['02/07/2026','Bônus da comunidade liberado','—']]
-        .map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td><td>${r[2]}</td></tr>`).join('')}
+       ${(S.licenseCreated?[[new Date(S.licenseCreated).toLocaleDateString('pt-BR'),'Compra do plano '+S.user.plan,'']]:[])
+        .map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td><td>${r[2]}</td></tr>`).join('')
+        || '<tr><td colspan="3" class="dim">Sem eventos ainda.</td></tr>'}
        </tbody></table>
+       <p class="dim" style="font-size:.82rem;margin-top:8px">O recibo de pagamento é enviado pela Cakto para o seu e-mail de compra.</p>
      </div>
    </div>
   </div>
@@ -5444,7 +5465,9 @@ VIEWS.conta={title:'Minha conta',sub:'Perfil, plano e segurança',html(){
   <div class="stack">
    <div class="card pad">
      <div class="between"><div><b style="font-family:var(--display)">Plano ${S.user.plan}</b>
-       <p class="dim">Acesso vitalício a todos os módulos, incluindo os que ainda vão sair.</p></div>
+       <p class="dim">${S.licenseExpires
+         ? 'Válido até '+new Date(S.licenseExpires).toLocaleDateString('pt-BR')+'.'
+         : 'Acesso à plataforma e a todos os módulos.'}</p></div>
        <span class="badge badge-green">Ativo</span></div>
      <div class="row" style="margin-top:14px;gap:8px">
        <button class="chip" onclick="toast('Recibo enviado para o seu e-mail')">Ver recibo</button>
@@ -5574,6 +5597,14 @@ async function tentarSessaoSalva(){
     return true;
   }catch(e){
     try{ localStorage.removeItem('pv2_sessao'); }catch(_){}
+    SB.token=null; SB.uid=null; SB.refreshToken=null;
+    if(e && e.semLicenca){
+      const err=$('#authErr');
+      if(err){
+        err.textContent='Seu acesso não está mais ativo (compra expirada, cancelada ou reembolsada). Faça login novamente ou fale com o suporte.';
+        err.classList.remove('hide');
+      }
+    }
     return false;
   }
 }
