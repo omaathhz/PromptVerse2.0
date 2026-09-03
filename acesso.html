@@ -2838,7 +2838,13 @@ VIEWS.gerador={title:'Gerador de vídeos IA',sub:'Escreva o prompt e gere direto
  const conectadas=IAS.filter(a=>m[a.id]);
  return `<div class="gen-wrap">
   <div class="card pad">
-    <label class="dim" style="font-size:.74rem;display:block;margin-bottom:6px">Prompt</label>
+    <label class="dim" style="font-size:.74rem;display:block;margin-bottom:6px">Imagem base (opcional)</label>
+    <div id="genImgBox">
+      <input type="file" id="genImgInput" accept="image/*" style="display:none" onchange="enviarImagemBase(this)">
+      <button class="btn btn-ghost btn-sm" type="button" onclick="$('#genImgInput').click()">${ico('img',14)} Enviar foto para animar</button>
+      <p class="dim" style="font-size:.72rem;margin-top:6px">Sem foto, o vídeo é gerado só a partir do texto. Com foto, a IA anima a imagem enviada.</p>
+    </div>
+    <label class="dim" style="font-size:.74rem;display:block;margin:14px 0 6px">Prompt</label>
     <textarea class="gen-txt" id="genPrompt" placeholder="Digite o prompt para gerar o vídeo."></textarea>
     <div class="gen-opts">
       <div><label>IA</label><select class="gen-sel" id="genIA" onchange="trocarIA()">
@@ -2865,7 +2871,45 @@ VIEWS.gerador={title:'Gerador de vídeos IA',sub:'Escreva o prompt e gere direto
     <div id="genHist"><div class="empty"><h4>Nada gerado ainda</h4><p>Seus vídeos aparecem aqui assim que ficarem prontos.</p></div></div>
   </div>
  </div>`;
-},after(){carregarVideos();trocarIA();}};
+},after(){carregarVideos();trocarIA();GEN_IMG_URL=null;}};
+
+let GEN_IMG_URL=null;
+async function enviarImagemBase(input){
+ const f=input.files&&input.files[0]; if(!f)return;
+ if(f.size>8*1024*1024){toast('Essa imagem passa de 8MB. Use uma menor.');input.value='';return;}
+ const box=$('#genImgBox');
+ box.innerHTML=`<div class="dim" style="font-size:.8rem">Enviando imagem...</div>`;
+ try{
+   const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+   const caminho=`base/${SB.uid}-${Date.now()}.${ext}`;
+   const r=await fetch(`${SB.url}/storage/v1/object/geradas/${caminho}`,{
+     method:'POST',
+     headers:{'apikey':SB.key,'Authorization':'Bearer '+SB.token,'x-upsert':'true','Content-Type':f.type||'image/jpeg'},
+     body:f});
+   if(!r.ok)throw new Error(await r.text());
+   GEN_IMG_URL=`${SB.url}/storage/v1/object/public/geradas/${caminho}`;
+   box.innerHTML=`<div class="row" style="align-items:center;gap:10px">
+     <img src="${GEN_IMG_URL}" style="width:52px;height:52px;object-fit:cover;border-radius:10px">
+     <div style="flex:1"><b style="font-size:.82rem">Imagem base anexada</b>
+       <p class="dim" style="font-size:.72rem;margin:2px 0 0">A IA vai animar essa foto.</p></div>
+     <button class="btn btn-ghost btn-sm" type="button" onclick="removerImagemBase()">${ico('x',14)}</button>
+   </div>`;
+   paintIcons(box);
+ }catch(e){
+   toast('Não consegui enviar a imagem');
+   box.innerHTML=`<button class="btn btn-ghost btn-sm" type="button" onclick="$('#genImgInput').click()">${ico('img',14)} Enviar foto para animar</button>
+     <input type="file" id="genImgInput" accept="image/*" style="display:none" onchange="enviarImagemBase(this)">`;
+   paintIcons(box);
+ }
+}
+function removerImagemBase(){
+ GEN_IMG_URL=null;
+ const box=$('#genImgBox'); if(!box)return;
+ box.innerHTML=`<input type="file" id="genImgInput" accept="image/*" style="display:none" onchange="enviarImagemBase(this)">
+   <button class="btn btn-ghost btn-sm" type="button" onclick="$('#genImgInput').click()">${ico('img',14)} Enviar foto para animar</button>
+   <p class="dim" style="font-size:.72rem;margin-top:6px">Sem foto, o vídeo é gerado só a partir do texto. Com foto, a IA anima a imagem enviada.</p>`;
+ paintIcons(box);
+}
 
 async function carregarVideos(){
  const box=$('#genHist'); if(!box)return;
@@ -2886,6 +2930,7 @@ async function carregarVideos(){
            ? `<div class="vi-load">${ico('x',22)}<span>${(v.erro||'Falhou').slice(0,60)}</span></div>`
            : `<div class="vi-load"><span class="vi-spin"></span><span>Gerando...</span></div>`}
        <span class="vi-tag">${v.provider}</span>
+       ${v.imagem_base_url?`<span class="vi-tag" style="left:auto;right:8px">${ico('img',12)} foto</span>`:''}
      </div>
      <div class="vi-body">
        <p>${(v.prompt||'').slice(0,120)}</p>
@@ -2921,8 +2966,9 @@ async function gerarVideo(){
  btn.disabled=true;btn.textContent='Enviando...';
  try{
    const modelo=provider==='fal'?$('#genModel').value:null;
-   await chamarIA({acao:'gerar_video',provider,prompt,formato,duracao,modelo});
+   await chamarIA({acao:'gerar_video',provider,prompt,formato,duracao,modelo,imagem_url:GEN_IMG_URL||undefined});
    $('#genPrompt').value='';
+   removerImagemBase();
    toast('Geração iniciada. O vídeo aparece aqui quando ficar pronto.');
    carregarVideos();
  }catch(e){ toast(String(e.message).slice(0,80)); }
@@ -3019,10 +3065,11 @@ function polliToken(){ try{ return (localStorage.getItem('polli_token')||'').tri
 function polliSetToken(v){ try{ v?localStorage.setItem('polli_token',v):localStorage.removeItem('polli_token'); }catch(e){} }
 function polliNome(id){ const m=POLLI_MODELS.find(x=>x.id===id); return m?m.n:id; }
 
-function polliUrl(prompt,modelo,formato,seed,neg){
+function polliUrl(prompt,modelo,formato,seed,neg,imagemBase){
  const par=POLLI_FMT[formato]||POLLI_FMT['1:1'];
  const q=new URLSearchParams({model:modelo,width:par[0],height:par[1],seed:String(seed),nologo:'true',referrer:'promptverse'});
  if(neg)q.set('negative_prompt',neg);
+ if(imagemBase)q.set('image',imagemBase);
  const t=polliToken(); if(t)q.set('token',t);
  return POLLI_BASE+encodeURIComponent(prompt)+'?'+q.toString();
 }
@@ -3049,7 +3096,13 @@ VIEWS.imagens={title:'Gerador de imagens IA',sub:'Escreva o prompt, escolha o mo
  if(!POLLI_MODELS.some(m=>m.id===mod))mod=POLLI_MODELS[0].id;
  return `<div class="gen-wrap">
   <div class="card pad">
-    <label class="dim" style="font-size:.74rem;display:block;margin-bottom:6px">Prompt</label>
+    <label class="dim" style="font-size:.74rem;display:block;margin-bottom:6px">Imagem base (opcional)</label>
+    <div id="imgImgBox">
+      <input type="file" id="imgImgInput" accept="image/*" style="display:none" onchange="enviarImagemBaseFoto(this)">
+      <button class="btn btn-ghost btn-sm" type="button" onclick="$('#imgImgInput').click()">${ico('img',14)} Enviar foto de referência</button>
+      <p class="dim" style="font-size:.72rem;margin-top:6px">Funciona melhor com o modelo <b>GPT Image</b> — ele edita/varia em cima da foto enviada.</p>
+    </div>
+    <label class="dim" style="font-size:.74rem;display:block;margin:14px 0 6px">Prompt</label>
     <textarea class="gen-txt" id="imgPrompt" placeholder="Descreva a imagem que você quer criar.">${escAttr(S.imgPrompt||'')}</textarea>
     <div class="gen-opts">
       <div><label>Modelo</label><select class="gen-sel" id="imgModel" onchange="S.imgModel=this.value;pintarStatus()">
@@ -3090,7 +3143,43 @@ VIEWS.imagens={title:'Gerador de imagens IA',sub:'Escreva o prompt, escolha o mo
     <div id="imgHist"><div class="empty"><h4>Carregando...</h4><p>Buscando suas imagens.</p></div></div>
   </div>
  </div>`;
-},after(){ pintarStatus(); carregarImagens(); }};
+},after(){ pintarStatus(); carregarImagens(); IMG_BASE_URL=null; }};
+
+let IMG_BASE_URL=null;
+async function enviarImagemBaseFoto(input){
+ const f=input.files&&input.files[0]; if(!f)return;
+ if(f.size>8*1024*1024){toast('Essa imagem passa de 8MB. Use uma menor.');input.value='';return;}
+ const box=$('#imgImgBox');
+ box.innerHTML=`<div class="dim" style="font-size:.8rem">Enviando imagem...</div>`;
+ try{
+   const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+   const caminho=`base/${SB.uid}-${Date.now()}.${ext}`;
+   const r=await fetch(`${SB.url}/storage/v1/object/geradas/${caminho}`,{
+     method:'POST',
+     headers:{'apikey':SB.key,'Authorization':'Bearer '+SB.token,'x-upsert':'true','Content-Type':f.type||'image/jpeg'},
+     body:f});
+   if(!r.ok)throw new Error(await r.text());
+   IMG_BASE_URL=`${SB.url}/storage/v1/object/public/geradas/${caminho}`;
+   box.innerHTML=`<div class="row" style="align-items:center;gap:10px">
+     <img src="${IMG_BASE_URL}" style="width:52px;height:52px;object-fit:cover;border-radius:10px">
+     <div style="flex:1"><b style="font-size:.82rem">Imagem de referência anexada</b>
+       <p class="dim" style="font-size:.72rem;margin:2px 0 0">A IA usa essa foto como base.</p></div>
+     <button class="btn btn-ghost btn-sm" type="button" onclick="removerImagemBaseFoto()">${ico('x',14)}</button>
+   </div>`;
+   paintIcons(box);
+ }catch(e){
+   toast('Não consegui enviar a imagem');
+   removerImagemBaseFoto();
+ }
+}
+function removerImagemBaseFoto(){
+ IMG_BASE_URL=null;
+ const box=$('#imgImgBox'); if(!box)return;
+ box.innerHTML=`<input type="file" id="imgImgInput" accept="image/*" style="display:none" onchange="enviarImagemBaseFoto(this)">
+   <button class="btn btn-ghost btn-sm" type="button" onclick="$('#imgImgInput').click()">${ico('img',14)} Enviar foto de referência</button>
+   <p class="dim" style="font-size:.72rem;margin-top:6px">Funciona melhor com o modelo <b>GPT Image</b> — ele edita/varia em cima da foto enviada.</p>`;
+ paintIcons(box);
+}
 
 function pintarStatus(){
  const box=$('#imgStatus'); if(!box)return;
@@ -3149,7 +3238,7 @@ async function gerarImagem(){
  S.imgPrompt=prompt; S.imgModel=modelo; S.imgLook=look;
  const seed=Math.floor(Math.random()*1000000000);
  const mont=polliMontar(prompt,look);
- const url=polliUrl(mont.texto,modelo,formato,seed,mont.neg);
+ const url=polliUrl(mont.texto,modelo,formato,seed,mont.neg,IMG_BASE_URL);
 
  btn.disabled=true; btn.textContent='Gerando...';
  const stage=$('#imgStage');
