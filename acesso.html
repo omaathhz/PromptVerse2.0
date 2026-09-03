@@ -2762,20 +2762,7 @@ async function carregarApis(){
 }
 VIEWS.apis={title:'Centro de APIs',sub:'Conecte suas próprias chaves de IA para gerar dentro da plataforma',html(){
  const m=S.apis||{};
- const on=S.polliOn!==false, tk=polliToken();
- return `<div class="card pad poll-card">
-   <div class="api-top"><b>Pollinations AI</b>
-     <span class="api-badge${on?' on':''}">${on?'Conectado':'Sem conexão'}</span></div>
-   <span class="api-hint">Usada em <b>todas</b> as gerações de imagem da plataforma — Flux, GPT Image, Qwen Image, Seedream 5, Ideogram V4 Quality e Grok Imagine.</span>
-   <span class="api-hint">Não precisa de chave para o uso básico. A chave só é necessária se você quiser limite maior ou fila prioritária.</span>
-   <div class="poll-key">
-     <input class="input" id="k_polli" type="password" placeholder="chave da Pollinations (opcional)" autocomplete="off" value="${tk}">
-     <button class="btn btn-ghost" onclick="salvarPolli()">${ico('lock',14)} Salvar</button>
-   </div>
-   <button class="btn btn-primary btn-block" id="polliTestBtn" onclick="testarPolli()">${ico('refresh',14)} TESTAR CONEXÃO</button>
-   <div class="poll-status" id="polliStatus"></div>
- </div>
- <div class="api-grid">${IAS.map(a=>{
+ return `<div class="api-grid">${IAS.map(a=>{
    const c=m[a.id];
    return `<div class="api-card">
      <div class="api-top"><b>${a.n}</b>
@@ -2806,31 +2793,6 @@ async function salvarApi(p){
 async function removerApi(p){
  try{ await chamarIA({acao:'remover_chave',provider:p}); await carregarApis(); S.apisCarregadas=true; nav('apis'); toast('Chave removida'); }
  catch(e){ toast('Não consegui remover agora'); }
-}
-
-/* ---------- POLLINATIONS: chave opcional e teste de conexão ---------- */
-function salvarPolli(){
- const el=$('#k_polli'); if(!el)return;
- polliSetToken(el.value.trim());
- toast(el.value.trim()?'Chave da Pollinations salva neste dispositivo.':'Chave removida. O uso básico continua liberado.');
-}
-async function testarPolli(){
- const btn=$('#polliTestBtn'), box=$('#polliStatus');
- if(btn){btn.disabled=true;btn.textContent='Testando...';}
- if(box)box.innerHTML='<span class="ps-item">Enviando um prompt de teste...</span>';
- try{
-   const t=await polliCarregar(polliUrl('a blue circle on a white background','flux','1:1',7),45000);
-   S.polliOn=true;
-   if(box)box.innerHTML=`<span class="ps-item"><i class="ps-dot on"></i> Conexão OK</span>
-     <span class="ps-item"><b>Resposta</b> ${t}s</span>
-     <span class="ps-item"><b>Modelos</b> ${POLLI_MODELS.length} disponíveis</span>`;
-   toast('Pollinations respondendo em '+t+'s');
- }catch(e){
-   S.polliOn=false;
-   if(box)box.innerHTML=`<span class="ps-item"><i class="ps-dot"></i> ${String(e.message).slice(0,70)}</span>`;
-   toast('Não consegui falar com a Pollinations agora');
- }
- if(btn){btn.disabled=false;btn.innerHTML=ico('refresh',14)+' TESTAR CONEXÃO';paintIcons(btn);}
 }
 
 VIEWS.gerador={title:'Gerador de vídeos IA',sub:'Escreva o prompt e gere direto aqui, usando a sua própria chave',html(){
@@ -3091,39 +3053,34 @@ function polliCarregar(url,timeout){
  });
 }
 
-VIEWS.imagens={title:'Gerador de imagens IA',sub:'Escreva o prompt, escolha o modelo e gere direto aqui',html(){
- let mod=S.imgModel||POLLI_MODELS[0].id;
- if(!POLLI_MODELS.some(m=>m.id===mod))mod=POLLI_MODELS[0].id;
+function iaNome(id){ const a=IAS.find(x=>x.id===id); return a?a.n:id; }
+
+VIEWS.imagens={title:'Gerador de imagens IA',sub:'Escreva o prompt e gere direto aqui, usando a sua própria chave',html(){
+ const m=S.apis||{};
+ const conectadas=IAS.filter(a=>m[a.id]&&a.id!=='luma');
  return `<div class="gen-wrap">
   <div class="card pad">
     <label class="dim" style="font-size:.74rem;display:block;margin-bottom:6px">Imagem base (opcional)</label>
     <div id="imgImgBox">
       <input type="file" id="imgImgInput" accept="image/*" style="display:none" onchange="enviarImagemBaseFoto(this)">
       <button class="btn btn-ghost btn-sm" type="button" onclick="$('#imgImgInput').click()">${ico('img',14)} Enviar foto de referência</button>
-      <p class="dim" style="font-size:.72rem;margin-top:6px">Funciona melhor com o modelo <b>GPT Image</b> — ele edita/varia em cima da foto enviada.</p>
+      <p class="dim" style="font-size:.72rem;margin-top:6px">Funciona melhor com <b>OpenAI</b> e <b>Gemini</b> — eles editam/variam em cima da foto enviada.</p>
     </div>
     <label class="dim" style="font-size:.74rem;display:block;margin:14px 0 6px">Prompt</label>
     <textarea class="gen-txt" id="imgPrompt" placeholder="Descreva a imagem que você quer criar.">${escAttr(S.imgPrompt||'')}</textarea>
     <div class="gen-opts">
-      <div><label>Modelo</label><select class="gen-sel" id="imgModel" onchange="S.imgModel=this.value;pintarStatus()">
-        ${POLLI_MODELS.map(m=>`<option value="${m.id}" ${m.id===mod?'selected':''}>${m.n}</option>`).join('')}
+      <div><label>IA</label><select class="gen-sel" id="imgIA">
+        ${conectadas.length?conectadas.map(a=>`<option value="${a.id}">${a.n}</option>`).join('')
+                          :`<option value="">Nenhuma IA conectada</option>`}
       </select></div>
-      <div><label>Formato</label><select class="gen-sel" id="imgFmt" onchange="S.imgFmt=this.value">
-        ${['1:1 quadrado','9:16 vertical','16:9 horizontal'].map((t,i)=>{const v=['1:1','9:16','16:9'][i];
-          return `<option value="${v}" ${v===(S.imgFmt||'1:1')?'selected':''}>${t}</option>`;}).join('')}
-      </select></div>
-      <div style="grid-column:1/-1"><label>Acabamento</label><select class="gen-sel" id="imgLook" onchange="S.imgLook=this.value">
-        ${Object.keys(POLLI_LOOK).map(k=>`<option value="${k}" ${k===(S.imgLook||'foto')?'selected':''}>${POLLI_LOOK[k].n}</option>`).join('')}
+      <div><label>Formato</label><select class="gen-sel" id="imgFmt">
+        <option value="1:1">1:1 quadrado</option><option value="9:16">9:16 vertical</option><option value="16:9">16:9 horizontal</option>
       </select></div>
       <div style="grid-column:1/-1">
         <button class="btn btn-primary btn-block" id="imgBtn" onclick="gerarImagem()">${ico('sparkles',15)} GERAR IMAGEM</button>
       </div>
-      <div style="grid-column:1/-1">
-        <div class="poll-status" id="imgStatus"></div>
-      </div>
     </div>
-    <p class="dim" style="margin-top:10px;font-size:.76rem">
-      ${(POLLI_MODELS.find(m=>m.id===mod)||POLLI_MODELS[0]).d}</p>
+    ${conectadas.length?'':`<p class="dim" style="margin-top:12px;font-size:.78rem">Conecte uma chave no <b>Centro de APIs</b> para liberar a geração.</p>`}
 
     <div class="poll-stage" id="imgStage">
       ${S.imgLast?`<img src="${S.imgLast.image_url}" alt="" loading="lazy">`
@@ -3143,7 +3100,7 @@ VIEWS.imagens={title:'Gerador de imagens IA',sub:'Escreva o prompt, escolha o mo
     <div id="imgHist"><div class="empty"><h4>Carregando...</h4><p>Buscando suas imagens.</p></div></div>
   </div>
  </div>`;
-},after(){ pintarStatus(); carregarImagens(); IMG_BASE_URL=null; }};
+},after(){ carregarImagens(); IMG_BASE_URL=null; }};
 
 let IMG_BASE_URL=null;
 async function enviarImagemBaseFoto(input){
@@ -3177,17 +3134,8 @@ function removerImagemBaseFoto(){
  const box=$('#imgImgBox'); if(!box)return;
  box.innerHTML=`<input type="file" id="imgImgInput" accept="image/*" style="display:none" onchange="enviarImagemBaseFoto(this)">
    <button class="btn btn-ghost btn-sm" type="button" onclick="$('#imgImgInput').click()">${ico('img',14)} Enviar foto de referência</button>
-   <p class="dim" style="font-size:.72rem;margin-top:6px">Funciona melhor com o modelo <b>GPT Image</b> — ele edita/varia em cima da foto enviada.</p>`;
+   <p class="dim" style="font-size:.72rem;margin-top:6px">Funciona melhor com <b>OpenAI</b> e <b>Gemini</b> — eles editam/variam em cima da foto enviada.</p>`;
  paintIcons(box);
-}
-
-function pintarStatus(){
- const box=$('#imgStatus'); if(!box)return;
- const mod=S.imgModel||POLLI_MODELS[0].id;
- const on=S.polliOn!==false;
- box.innerHTML=`<span class="ps-item"><b>Modelo</b> ${polliNome(mod)}</span>
-   <span class="ps-item"><i class="ps-dot${on?' on':''}"></i> ${on?'Pollinations online':'Sem conexão'}</span>
-   <span class="ps-item"><b>Tempo</b> ${S.imgTempo?S.imgTempo+'s':'—'}</span>`;
 }
 
 async function carregarImagens(){
@@ -3201,7 +3149,7 @@ function pintarHistorico(){
  const q=(S.imgQ||'').trim().toLowerCase();
  let lista=(S.imgs||[]);
  if(S.imgFav)lista=lista.filter(v=>v.favorito);
- if(q)lista=lista.filter(v=>((v.prompt||'')+' '+polliNome(v.modelo||'')).toLowerCase().includes(q));
+ if(q)lista=lista.filter(v=>((v.prompt||'')+' '+iaNome(v.provider||'')).toLowerCase().includes(q));
  if(!lista.length){
    box.innerHTML=`<div class="empty"><h4>${q||S.imgFav?'Nada encontrado':'Nada gerado ainda'}</h4>
      <p>${q||S.imgFav?'Tente outro termo ou tire o filtro.':'Suas imagens aparecem aqui.'}</p></div>`;
@@ -3216,7 +3164,7 @@ function pintarHistorico(){
      </div>
      <div class="ii-body">
        <p>${(v.prompt||'').slice(0,90)}</p>
-       <small>${new Date(v.created_at).toLocaleDateString('pt-BR')} • ${polliNome(v.modelo||'flux')}</small>
+       <small>${new Date(v.created_at).toLocaleDateString('pt-BR')} • ${iaNome(v.provider||'')}</small>
        <div class="ii-acts">
          <button class="icon-btn" title="Baixar" onclick="baixarImagem('${v.image_url}')">${ico('dl',14)}</button>
          <button class="icon-btn" title="Copiar prompt" onclick="copiarPrompt(${JSON.stringify(v.prompt||'').replace(/"/g,'&quot;')})">${ico('copy',14)}</button>
@@ -3230,33 +3178,22 @@ function pintarHistorico(){
 async function gerarImagem(){
  const el=$('#imgPrompt'); if(!el)return;
  const prompt=el.value.trim();
- const modelo=$('#imgModel').value, formato=$('#imgFmt').value, btn=$('#imgBtn');
- S.imgFmt=formato;
+ const provider=$('#imgIA').value, formato=$('#imgFmt').value, btn=$('#imgBtn');
+ if(!provider){toast('Conecte uma IA no Centro de APIs');return;}
  if(prompt.length<5){toast('Escreva um prompt maior');return;}
-
- const look=($('#imgLook')||{}).value||S.imgLook||'foto';
- S.imgPrompt=prompt; S.imgModel=modelo; S.imgLook=look;
- const seed=Math.floor(Math.random()*1000000000);
- const mont=polliMontar(prompt,look);
- const url=polliUrl(mont.texto,modelo,formato,seed,mont.neg,IMG_BASE_URL);
+ S.imgPrompt=prompt; S.imgFmt=formato;
 
  btn.disabled=true; btn.textContent='Gerando...';
  const stage=$('#imgStage');
- if(stage)stage.innerHTML=`<div class="vi-load"><span class="vi-spin"></span><span>Gerando com ${polliNome(modelo)}...</span></div>`;
+ if(stage)stage.innerHTML=`<div class="vi-load"><span class="vi-spin"></span><span>Gerando com ${iaNome(provider)}...</span></div>`;
 
  try{
-   const tempo=await polliCarregar(url);
-   S.imgTempo=tempo; S.polliOn=true;
-   S.imgLast={prompt,modelo,formato,image_url:url,seed};
-   try{
-     const r=await SB.insert('generated_images',
-       {user_id:SB.uid,provider:'pollinations',modelo,prompt,formato,image_url:url,seed});
-     if(r&&r[0])S.imgs=[r[0]].concat(S.imgs||[]);
-   }catch(e){ toast('Imagem pronta, mas não consegui salvar no histórico'); }
+   const r=await chamarIA({acao:'gerar_imagem',provider,prompt,formato,imagem_url:IMG_BASE_URL||undefined});
+   S.imgLast={prompt,provider,formato,image_url:r.url};
+   removerImagemBaseFoto();
    nav('imagens');
-   toast('Imagem pronta em '+tempo+'s');
+   toast('Imagem pronta.');
  }catch(e){
-   S.polliOn=false; pintarStatus();
    if(stage)stage.innerHTML=`<div class="vi-load">${ico('x',22)}<span>${String(e.message).slice(0,70)}</span></div>`;
    toast(String(e.message).slice(0,90));
    btn.disabled=false; btn.innerHTML=ico('sparkles',15)+' GERAR IMAGEM'; paintIcons(btn);
