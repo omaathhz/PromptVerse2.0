@@ -332,46 +332,34 @@ table.data td b{color:var(--txt);font-weight:600}
 .gal-body h4{font-family:var(--display);font-size:.95rem;margin-bottom:10px;color:var(--txt)}
 @media(max-width:640px){.gal-grid{grid-template-columns:1fr}}
 /* Dashboard */
-.dash-wrap{display:flex;flex-direction:column;gap:18px}
-.dash-card{background:var(--glass-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;
+.dash-wrap{display:flex;flex-direction:column;gap:14px;max-width:640px;margin:0 auto}
+.dash-card{background:var(--glass-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;
   backdrop-filter:blur(14px);transition:.2s}
-.dash-card:hover{border-color:var(--line-2);box-shadow:var(--glow)}
-.dash-banner{position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;
-  background:linear-gradient(120deg,rgba(37,99,235,.16),rgba(8,20,40,.6));
-  border:1px solid var(--line-2);border-radius:var(--r-lg);padding:28px;box-shadow:var(--glow)}
-.dash-banner-txt{flex:1;min-width:0}
-.dash-banner-txt h2{font-family:var(--display);font-size:1.4rem;margin-bottom:8px;color:var(--txt)}
-.dash-banner-txt p{color:var(--txt-2);font-size:.88rem;line-height:1.5;margin-bottom:16px;max-width:520px}
-.dash-banner-ic{width:96px;height:96px;flex-shrink:0;border-radius:20px;display:flex;align-items:center;justify-content:center;
-  background:rgba(37,99,235,.12);border:1px solid var(--line-2);color:var(--blue-hi)}
-@media(max-width:640px){.dash-banner{flex-direction:column;text-align:center;padding:22px}.dash-banner-txt p{max-width:none}}
-.dash-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
-.dash-mcard{background:var(--glass-2);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;transition:.2s}
-.dash-mcard:hover{border-color:var(--line-2);box-shadow:var(--glow);transform:translateY(-2px)}
-.dash-mcard .dm-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-  background:rgba(37,99,235,.14);color:var(--blue-hi);margin-bottom:10px}
-.dash-mcard label{display:block;color:var(--txt-3);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
-.dash-mcard b{display:block;font-family:var(--display);font-size:1.3rem;color:var(--txt)}
-.dash-mcard .dm-delta{display:inline-block;margin-top:6px;font-size:.72rem;color:var(--txt-3)}
-.dash-charts{display:grid;grid-template-columns:1fr;gap:14px}
-@media(min-width:900px){.dash-charts{grid-template-columns:1fr 1fr}.dash-charts .dash-card:last-child{grid-column:1/-1}}
-.dash-chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
-.dash-chart-head h3{font-family:var(--display);font-size:.95rem;color:var(--txt)}
-.dash-filters{display:flex;gap:6px}
-.dash-filters button{padding:5px 11px;border-radius:99px;font-size:.72rem;border:1px solid var(--line);color:var(--txt-2);background:transparent}
+.dash-card:hover{border-color:var(--line-2)}
+.dash-hero{position:relative;overflow:hidden;border-radius:var(--r-lg);border:1px solid var(--line-2);
+  background:radial-gradient(120% 140% at 20% 0%,rgba(37,99,235,.35),rgba(5,8,22,.9) 60%);
+  box-shadow:var(--glow);padding:36px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:170px}
+.dash-hero-inner{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--txt)}
+.dash-hero-inner span{font-family:var(--display);font-size:1.1rem;letter-spacing:.02em}
+.dash-dots{display:flex;gap:6px}
+.dash-dots span{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.25)}
+.dash-dots span.on{background:var(--blue-hi);width:16px;border-radius:99px}
+.dash-hello{font-family:var(--display);font-size:1.3rem;color:var(--txt);margin-top:4px}
+.dash-actions{display:flex;gap:10px}
+.dash-actions .btn{flex:1}
+.dash-meta{border-color:var(--line-2);box-shadow:var(--glow)}
+.dm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:.86rem;color:var(--txt-2)}
+.dm-head b{color:var(--txt);font-family:var(--display);font-weight:600}
+.dash-bar{height:8px;border-radius:99px;background:rgba(148,163,201,.14);overflow:hidden}
+.dash-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--blue-hi));transition:width .4s}
+.dash-pct{display:block;text-align:right;margin-top:6px;font-size:.76rem;color:var(--blue-hi);font-weight:600}
+.dash-stat label{display:block;color:var(--txt-3);font-size:.8rem;margin-bottom:6px}
+.dash-stat b{display:block;font-family:var(--display);font-size:1.6rem;color:var(--txt)}
+.dash-chart-head{margin-bottom:12px}
+.dash-filters{display:flex;gap:6px;flex-wrap:wrap}
+.dash-filters button{display:flex;align-items:center;gap:4px;padding:6px 13px;border-radius:99px;font-size:.76rem;
+  border:1px solid var(--line);color:var(--txt-2);background:transparent}
 .dash-filters button.on{background:rgba(37,99,235,.18);border-color:var(--line-2);color:var(--txt)}
-.dash-grid-2{display:grid;grid-template-columns:1fr;gap:14px}
-@media(min-width:900px){.dash-grid-2{grid-template-columns:1fr 1fr}}
-.dash-card h3{font-family:var(--display);font-size:.95rem;color:var(--txt);margin-bottom:14px}
-.dash-plan{background:linear-gradient(120deg,rgba(37,99,235,.14),rgba(8,20,40,.5));border-color:var(--line-2)}
-.dash-status p{color:var(--txt-2);font-size:.85rem;margin-bottom:14px}
-.dash-toprow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
-.dash-toprow:last-child{border-bottom:0}
-.dash-toprow .dtr-pos{width:26px;height:26px;border-radius:8px;background:rgba(37,99,235,.14);color:var(--blue-hi);
-  display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:700;flex-shrink:0}
-.dash-toprow .dtr-info{flex:1;min-width:0}
-.dash-toprow .dtr-info b{display:block;font-size:.84rem;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dash-toprow .dtr-info span{font-size:.74rem;color:var(--txt-3)}
 
 /* studio */
 .studio{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
@@ -5707,93 +5695,152 @@ Use the attached image as visual reference for the woman's facial structure, ski
 Visual Cues & Vibe: shot on a prime 50mm lens equivalent. Ultra-realistic skin detail with visible pores, texture variation, under-eye shadows, fine lines, and natural imperfections. No skin smoothing. No beauty filter. No artificial glow. Natural daylight-balanced lighting with soft neutral color grading. Shallow depth of field emphasizing real skin texture. Organic handheld motion mimicking authentic skincare routine footage. No stylization, no over-processing, no plastic skin effect.`}
 ];
 
-VIEWS.dashboard={title:'Dashboard',sub:'Visão geral da sua operação no PromptVerse',html(){
+const brlD=n=>'R$'+(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function dashVendasPorDia(dias){
+ const hoje=new Date(); hoje.setHours(0,0,0,0);
+ const dias0=+dias||7;
+ const inicio=new Date(hoje); inicio.setDate(inicio.getDate()-(dias0-1));
+ const porDia={};
+ (S.vendas||[]).forEach(v=>{
+   if(v.status!=='approved')return;
+   const d=new Date(v.sale_date+'T00:00:00'); if(isNaN(d))return;
+   if(d<inicio||d>hoje)return;
+   const k=d.toISOString().slice(0,10);
+   porDia[k]=(porDia[k]||0)+(+v.gmv||0);
+ });
+ const labels=[],valores=[];
+ for(let i=0;i<dias0;i++){
+   const d=new Date(inicio); d.setDate(d.getDate()+i);
+   const k=d.toISOString().slice(0,10);
+   labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+   valores.push(porDia[k]||0);
+ }
+ return {labels,valores};
+}
+function dashChartSvg(dias){
+ const {labels,valores}=dashVendasPorDia(dias);
+ const W=680,H=210,padL=44,padR=14,padT=14,padB=30;
+ const max=Math.max(10,...valores);
+ const n=labels.length;
+ const stepX=n>1?(W-padL-padR)/(n-1):0;
+ const yFor=v=>H-padB-(v/max)*(H-padT-padB);
+ const pts=valores.map((v,i)=>(padL+i*stepX)+','+yFor(v)).join(' ');
+ const showEvery=Math.max(1,Math.ceil(n/7));
+ const grid=[0,.25,.5,.75,1].map(f=>{
+   const y=H-padB-f*(H-padT-padB);
+   return `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(148,163,201,.12)" stroke-width="1"/>
+     <text x="${padL-8}" y="${y+3}" font-size="9" fill="#6B7488" text-anchor="end">${brlD(max*f).replace('R$','')}</text>`;
+ }).join('');
+ const labelsHtml=labels.map((l,i)=> i%showEvery===0||i===n-1 ? `<text x="${padL+i*stepX}" y="${H-8}" font-size="9" fill="#6B7488" text-anchor="middle">${l}</text>` : '').join('');
+ const dots=valores.map((v,i)=>`<circle cx="${padL+i*stepX}" cy="${yFor(v)}" r="3" fill="#3B82F6"/>`).join('');
+ return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="overflow:visible;display:block">
+   ${grid}
+   <polyline points="${pts}" fill="none" stroke="#3B82F6" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+   ${dots}
+   ${labelsHtml}
+ </svg>`;
+}
+
+VIEWS.dashboard={title:'Dashboard',sub:'Seus números de hoje',html(){
  const per=S.dashPer||'7';
- const conectado=!!S.tiktokConectado;
+ const gmv=(S.kpi&&S.kpi.gmv)||0, com=(S.kpi&&S.kpi.com)||0, qtd=(S.kpi&&S.kpi.qtd)||0;
+ const ticket=qtd>0?gmv/qtd:0;
+ const meta=S.dashMeta||10000;
+ const pct=meta>0?Math.min(100,(gmv/meta*100)):0;
+ const primeiroNome=(S.user.name||'').trim().split(' ')[0]||'Criador';
+ const pendentes=(S.vendas||[]).filter(v=>v.status==='pending').length;
  return `<div class="dash-wrap">
 
-  <div class="dash-banner">
-    <div class="dash-banner-txt">
-      <h2>Conecte sua conta TikTok Shop</h2>
-      <p>Visualize suas vendas, GMV, comissões, seguidores e desempenho em tempo real diretamente dentro do PromptVerse.</p>
-      <button class="btn btn-primary" onclick="conectarTikTokShop()">${ico('link',15)} CONECTAR TIKTOK SHOP</button>
-    </div>
-    <div class="dash-banner-ic">${ico('chart',40)}</div>
+  <div class="dash-hero">
+    <div class="dash-hero-inner">${ico('sparkles',30)}<span>PromptVerse 2.0</span></div>
+    <div class="dash-dots"><span class="on"></span><span></span><span></span></div>
   </div>
 
-  <div class="dash-metrics">
-    ${[['box','GMV Total','R$ 0,00'],['star','Comissões','R$ 0,00'],['check','Vendas aprovadas','0'],
-       ['clock','Vendas pendentes','0'],['user','Seguidores','0']].map(m=>`
-      <div class="dash-mcard">
-        <div class="dm-ic">${ico(m[0],17)}</div>
-        <label>${m[1]}</label>
-        <b>${m[2]}</b>
-        <span class="dm-delta">— sem dados ainda</span>
-      </div>`).join('')}
+  <h2 class="dash-hello">Olá, ${primeiroNome} <span>👋</span></h2>
+
+  <div class="dash-actions">
+    <button class="btn btn-primary" onclick="abrirRegistrarVenda()">${ico('plus',15)} Registrar venda</button>
+    <button class="btn btn-ghost" onclick="atualizarDashboard()">${ico('refresh',15)} Atualizar</button>
   </div>
 
-  <div class="dash-charts">
-    <div class="dash-card">
-      <div class="dash-chart-head">
-        <h3>Evolução do GMV</h3>
-        <div class="dash-filters">
-          ${['7','30','90'].map(p=>`<button class="${p===per?'on':''}" onclick="S.dashPer='${p}';nav('dashboard')">${p}d</button>`).join('')}
-        </div>
-      </div>
-      <div class="empty" style="padding:28px 16px"><h4>${ico('chart',22)}</h4><p style="margin-top:8px">Conecte sua conta pra ver a evolução do GMV aqui.</p></div>
+  <div class="dash-card dash-meta">
+    <div class="dm-head">
+      <span>${ico('sparkles',15)} Faturamento</span>
+      <b>${brlD(gmv)}/${brlD(meta)}</b>
     </div>
-    <div class="dash-card">
-      <div class="dash-chart-head">
-        <h3>Evolução das Comissões</h3>
-        <div class="dash-filters">
-          ${['7','30','90'].map(p=>`<button class="${p===per?'on':''}" onclick="S.dashPer='${p}';nav('dashboard')">${p}d</button>`).join('')}
-        </div>
-      </div>
-      <div class="empty" style="padding:28px 16px"><h4>${ico('chart',22)}</h4><p style="margin-top:8px">Conecte sua conta pra ver a evolução das comissões aqui.</p></div>
-    </div>
-    <div class="dash-card">
-      <div class="dash-chart-head"><h3>Evolução das Vendas</h3></div>
-      <div class="empty" style="padding:28px 16px"><h4>${ico('chart',22)}</h4><p style="margin-top:8px">Conecte sua conta pra ver suas vendas em gráfico de barras aqui.</p></div>
-    </div>
+    <div class="dash-bar"><div class="dash-bar-fill" style="width:${pct}%"></div></div>
+    <span class="dash-pct">${pct.toFixed(pct%1?1:0)}%</span>
   </div>
+
+  <div class="dash-card dash-stat">
+    <label>Valor total</label>
+    <b>${brlD(gmv)}</b>
+  </div>
+
+  <div class="dash-card dash-stat">
+    <label>Ganhos em Comissão</label>
+    <b>${brlD(com)}</b>
+  </div>
+
+  <div class="dash-card dash-stat">
+    <label>Ticket Médio</label>
+    <b>${brlD(ticket)}</b>
+  </div>
+
+  ${pendentes?`<div class="dash-card dash-stat"><label>Vendas pendentes</label><b>${pendentes}</b></div>`:''}
 
   <div class="dash-card">
-    <h3>Produtos da Vitrine</h3>
-    <div class="empty" style="padding:24px 16px"><h4>Nenhum produto conectado</h4>
-      <p>Conecte sua conta TikTok Shop para listar aqui os produtos da sua vitrine, com comissão e preço de cada um.</p></div>
-  </div>
-
-  <div class="dash-grid-2">
-    <div class="dash-card">
-      <h3>Top 5 Produtos</h3>
-      <div class="empty" style="padding:22px 16px"><h4>Sem ranking ainda</h4><p>Aparece aqui assim que você tiver vendas registradas.</p></div>
+    <div class="dash-chart-head">
+      <div class="dash-filters">
+        ${['7','30','90'].map(p=>`<button class="${p===per?'on':''}" onclick="S.dashPer='${p}';nav('dashboard')">${p===per?ico('search',11):''} Filtrar ${p}d</button>`).join('')}
+      </div>
     </div>
-    <div class="dash-card">
-      <h3>Vídeos Mais Lucrativos</h3>
-      <div class="empty" style="padding:22px 16px"><h4>Sem vídeos ainda</h4><p>Os vídeos que mais geraram comissão aparecem aqui.</p></div>
-    </div>
-  </div>
-
-  <div class="dash-grid-2">
-    <div class="dash-card dash-status">
-      <h3>Status da Conexão</h3>
-      ${conectado
-        ? `<p>${ico('check',14)} Conta conectada</p>`
-        : `<p>${ico('x',14)} Conta não conectada</p>
-           <button class="btn btn-primary btn-block" onclick="conectarTikTokShop()">${ico('link',15)} CONECTAR TIKTOK SHOP</button>`}
-    </div>
-    <div class="dash-card dash-plan">
-      <h3>Plano ${S.user.plan}</h3>
-      <p class="dim" style="margin-bottom:14px">Você possui acesso completo a todos os módulos do PromptVerse 2.0.</p>
-      <button class="btn btn-ghost btn-block" onclick="nav('conta')">Gerenciar Conta</button>
-    </div>
+    ${(S.vendas&&S.vendas.length) ? dashChartSvg(per)
+      : `<div class="empty" style="padding:24px 16px"><h4>Nenhuma venda registrada ainda</h4><p>Use "Registrar venda" acima pra ver o gráfico ganhar forma.</p></div>`}
   </div>
 
  </div>`;
 },after(){}};
 
-function conectarTikTokShop(){
- toast('Integração com o TikTok Shop chega em breve.');
+async function atualizarDashboard(){
+ toast('Atualizando...');
+ try{ await carregarDados(); }catch(e){}
+ nav('dashboard');
+}
+
+function abrirRegistrarVenda(){
+ const hoje=new Date().toISOString().slice(0,10);
+ openModal(`<div class="modal-head"><div><h3>Registrar venda manual</h3><p class="dim">Lança uma venda direto no seu histórico</p></div>
+   <button class="icon-btn" onclick="closeModal()">${ico('x')}</button></div>
+   <div class="pad">
+     <label class="dim" style="font-size:.78rem;display:block;margin-bottom:6px">Data</label>
+     <input class="input" type="date" id="rvData" value="${hoje}" style="margin-bottom:14px">
+     <label class="dim" style="font-size:.78rem;display:block;margin-bottom:6px">Quantidade de vendas</label>
+     <input class="input" type="number" id="rvQtd" min="1" value="1" style="margin-bottom:14px">
+     <label class="dim" style="font-size:.78rem;display:block;margin-bottom:6px">Valor bruto total (R$)</label>
+     <input class="input" type="number" id="rvGmv" min="0" step="0.01" placeholder="0,00" style="margin-bottom:14px">
+     <label class="dim" style="font-size:.78rem;display:block;margin-bottom:6px">Comissão recebida (R$)</label>
+     <input class="input" type="number" id="rvCom" min="0" step="0.01" placeholder="0,00" style="margin-bottom:18px">
+     <button class="btn btn-primary btn-block" onclick="salvarVendaManual()">Registrar</button>
+   </div>`);
+}
+
+async function salvarVendaManual(){
+ if(SB.demo||!SB.uid){toast('Entre com a sua conta para registrar vendas');return;}
+ const data=$('#rvData').value, qtd=+$('#rvQtd').value||1;
+ const gmv=+$('#rvGmv').value||0, com=+$('#rvCom').value||0;
+ if(!data){toast('Escolha uma data');return;}
+ if(gmv<=0){toast('Informe o valor bruto total');return;}
+ try{
+   await SB.insert('sales',{
+     user_id:SB.uid, product_name:'Venda manual ('+qtd+')',
+     gmv, commission:com, status:'approved', sale_date:data
+   });
+   closeModal();
+   toast('Venda registrada');
+   await carregarDados();
+   nav('dashboard');
+ }catch(e){ toast('Não consegui registrar: '+String(e.message||e).slice(0,60)); }
 }
 
 VIEWS.prompts={title:'Galeria de Prompts',sub:GALERIA.length+' prompts reais, cada um acompanhado pelo vídeo ou imagem exata correspondente.',html(){
