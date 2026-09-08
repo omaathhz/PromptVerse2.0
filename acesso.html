@@ -5668,7 +5668,7 @@ Visual Cues & Vibe: shot on a prime 50mm lens equivalent. Ultra-realistic skin d
 VIEWS.prompts={title:'Galeria de Prompts',sub:GALERIA.length+' prompts reais, cada um acompanhado pelo vídeo ou imagem exata correspondente.',html(){
  const q=(S.galQ||'').trim().toLowerCase();
  const cat=S.galCat||'Todos';
- let lista=GALERIA;
+ let lista=GALERIA.map((c,i)=>({...c,_i:i}));
  if(cat!=='Todos')lista=lista.filter(c=>c.cat===cat);
  if(q)lista=lista.filter(c=>((c.n||'')+' '+(c.cat||'')).toLowerCase().includes(q));
  return `<div class="gal-wrap">
@@ -5681,7 +5681,7 @@ VIEWS.prompts={title:'Galeria de Prompts',sub:GALERIA.length+' prompts reais, ca
   <div class="gal-cats">
     ${GALERIA_CATS.map(c=>`<button class="chip${c===cat?' on':''}" onclick="S.galCat='${c}';nav('prompts')">${c.toUpperCase()}</button>`).join('')}
   </div>
-  ${lista.length?`<div class="gal-grid">${lista.map((c,i)=>`
+  ${lista.length?`<div class="gal-grid">${lista.map(c=>{const i=c._i;return `
    <div class="gal-card">
      <div class="gal-stage" id="galst${i}">
        <span class="gal-tag">${(c.cat||'').toUpperCase()}</span>
@@ -5694,7 +5694,7 @@ VIEWS.prompts={title:'Galeria de Prompts',sub:GALERIA.length+' prompts reais, ca
        <h4>${c.n||('Prompt '+(i+1))}</h4>
        <button class="btn btn-primary btn-block" onclick="copyGaleria(${i})">${ico('copy',15)} COPIAR PROMPT</button>
      </div>
-   </div>`).join('')}</div>`
+   </div>`;}).join('')}</div>`
    :`<div class="empty" style="margin-top:20px"><h4>${GALERIA.length?'Nada encontrado':'Galeria vazia por enquanto'}</h4>
       <p>${GALERIA.length?'Tente outro termo ou categoria.':'Os vídeos e prompts entram aqui assim que forem cadastrados no array GALERIA.'}</p></div>`}
  </div>`;
