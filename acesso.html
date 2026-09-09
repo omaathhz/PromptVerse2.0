@@ -360,6 +360,11 @@ table.data td b{color:var(--txt);font-weight:600}
 .dash-filters button{display:flex;align-items:center;gap:4px;padding:6px 13px;border-radius:99px;font-size:.76rem;
   border:1px solid var(--line);color:var(--txt-2);background:transparent}
 .dash-filters button.on{background:rgba(37,99,235,.18);border-color:var(--line-2);color:var(--txt)}
+.dash-datepick{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:99px;font-size:.76rem;
+  border:1px solid var(--line);color:var(--txt-2);cursor:pointer}
+.dash-datepick.on{background:rgba(37,99,235,.18);border-color:var(--line-2);color:var(--txt)}
+.dash-datepick input{background:transparent;border:0;color:inherit;font:inherit;padding:0;width:92px}
+.dash-datepick input::-webkit-calendar-picker-indicator{filter:invert(.7)}
 
 /* studio */
 .studio{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
@@ -5697,29 +5702,46 @@ Visual Cues & Vibe: shot on a prime 50mm lens equivalent. Ultra-realistic skin d
 
 const brlD=n=>'R$'+(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const DASH_BANNER=[VIDEO_BASE+'/dash-banner1.jpg',VIDEO_BASE+'/dash-banner2.jpg',VIDEO_BASE+'/dash-banner3.jpg',VIDEO_BASE+'/dash-banner4.jpg'];
-function dashVendasPorDia(dias){
+function dashIntervalo(per){
  const hoje=new Date(); hoje.setHours(0,0,0,0);
- const dias0=+dias||7;
+ if(per==='hoje')return{inicio:new Date(hoje),fim:new Date(hoje)};
+ if(per==='ontem'){const d=new Date(hoje);d.setDate(d.getDate()-1);return{inicio:d,fim:new Date(d)};}
+ if(per&&per.startsWith('data:')){
+   const d=new Date(per.slice(5)+'T00:00:00');
+   if(!isNaN(d))return{inicio:d,fim:new Date(d)};
+ }
+ const dias0=+per||7;
  const inicio=new Date(hoje); inicio.setDate(inicio.getDate()-(dias0-1));
+ return{inicio,fim:hoje};
+}
+function dashEhDiaUnico(per){ return per==='hoje'||per==='ontem'||(per&&per.startsWith('data:')); }
+function dashFiltrarVendas(per){
+ const {inicio,fim}=dashIntervalo(per);
+ return (S.vendas||[]).filter(v=>{
+   if(v.status!=='approved')return false;
+   const d=new Date(v.sale_date+'T00:00:00'); if(isNaN(d))return false;
+   return d>=inicio&&d<=fim;
+ });
+}
+function dashVendasPorDia(per){
+ const {inicio,fim}=dashIntervalo(per);
  const porDia={};
- (S.vendas||[]).forEach(v=>{
-   if(v.status!=='approved')return;
-   const d=new Date(v.sale_date+'T00:00:00'); if(isNaN(d))return;
-   if(d<inicio||d>hoje)return;
-   const k=d.toISOString().slice(0,10);
+ dashFiltrarVendas(per).forEach(v=>{
+   const k=v.sale_date;
    porDia[k]=(porDia[k]||0)+(+v.gmv||0);
  });
  const labels=[],valores=[];
- for(let i=0;i<dias0;i++){
-   const d=new Date(inicio); d.setDate(d.getDate()+i);
-   const k=d.toISOString().slice(0,10);
-   labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+ const cursor=new Date(inicio);
+ while(cursor<=fim){
+   const k=cursor.toISOString().slice(0,10);
+   labels.push(cursor.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
    valores.push(porDia[k]||0);
+   cursor.setDate(cursor.getDate()+1);
  }
  return {labels,valores};
 }
-function dashChartSvg(dias){
- const {labels,valores}=dashVendasPorDia(dias);
+function dashChartSvg(per){
+ const {labels,valores}=dashVendasPorDia(per);
  const W=680,H=210,padL=44,padR=14,padT=14,padB=30;
  const max=Math.max(10,...valores);
  const n=labels.length;
@@ -5744,12 +5766,21 @@ function dashChartSvg(dias){
 
 VIEWS.dashboard={title:'Dashboard',sub:'Seus números de hoje',html(){
  const per=S.dashPer||'7';
- const gmv=(S.kpi&&S.kpi.gmv)||0, com=(S.kpi&&S.kpi.com)||0, qtd=(S.kpi&&S.kpi.qtd)||0;
- const ticket=qtd>0?gmv/qtd:0;
+ const gmv=(S.kpi&&S.kpi.gmv)||0;
  const meta=S.dashMeta||10000;
  const pct=meta>0?Math.min(100,(gmv/meta*100)):0;
  const primeiroNome=(S.user.name||'').trim().split(' ')[0]||'Criador';
  const pendentes=(S.vendas||[]).filter(v=>v.status==='pending').length;
+
+ const vendasF=dashFiltrarVendas(per);
+ const gmvF=vendasF.reduce((a,v)=>a+ +v.gmv,0);
+ const comF=vendasF.reduce((a,v)=>a+ +v.commission,0);
+ const ticketF=vendasF.length?gmvF/vendasF.length:0;
+ const diaUnico=dashEhDiaUnico(per);
+ const dataInput=per.startsWith&&per.startsWith('data:')?per.slice(5):'';
+ const hojeISO=new Date().toISOString().slice(0,10);
+ const periodoLabel=per==='hoje'?'hoje':per==='ontem'?'ontem':per.startsWith('data:')?'no dia selecionado':'no período';
+
  return `<div class="dash-wrap">
 
   <div class="dash-hero" id="dashHero">
@@ -5775,31 +5806,45 @@ VIEWS.dashboard={title:'Dashboard',sub:'Seus números de hoje',html(){
     <span class="dash-pct">${pct.toFixed(pct%1?1:0)}%</span>
   </div>
 
-  <div class="dash-card dash-stat">
-    <label>Valor total</label>
-    <b>${brlD(gmv)}</b>
+  <div class="dash-card">
+    <div class="dash-chart-head">
+      <div class="dash-filters">
+        <button class="${per==='hoje'?'on':''}" onclick="S.dashPer='hoje';nav('dashboard')">Hoje</button>
+        <button class="${per==='ontem'?'on':''}" onclick="S.dashPer='ontem';nav('dashboard')">Ontem</button>
+        ${['7','30','90'].map(p=>`<button class="${p===per?'on':''}" onclick="S.dashPer='${p}';nav('dashboard')">${p}d</button>`).join('')}
+        <label class="dash-datepick${dataInput?' on':''}">
+          ${ico('cal',12)}
+          <input type="date" value="${dataInput}" max="${hojeISO}" onchange="S.dashPer='data:'+this.value;nav('dashboard')">
+        </label>
+      </div>
+    </div>
   </div>
 
   <div class="dash-card dash-stat">
-    <label>Ganhos em Comissão</label>
-    <b>${brlD(com)}</b>
+    <label>Valor total <span class="dim" style="font-size:.72rem">— ${periodoLabel}</span></label>
+    <b>${brlD(gmvF)}</b>
   </div>
 
   <div class="dash-card dash-stat">
-    <label>Ticket Médio</label>
-    <b>${brlD(ticket)}</b>
+    <label>Ganhos em Comissão <span class="dim" style="font-size:.72rem">— ${periodoLabel}</span></label>
+    <b>${brlD(comF)}</b>
+  </div>
+
+  <div class="dash-card dash-stat">
+    <label>Ticket Médio <span class="dim" style="font-size:.72rem">— ${periodoLabel}</span></label>
+    <b>${brlD(ticketF)}</b>
   </div>
 
   ${pendentes?`<div class="dash-card dash-stat"><label>Vendas pendentes</label><b>${pendentes}</b></div>`:''}
 
   <div class="dash-card">
-    <div class="dash-chart-head">
-      <div class="dash-filters">
-        ${['7','30','90'].map(p=>`<button class="${p===per?'on':''}" onclick="S.dashPer='${p}';nav('dashboard')">${p===per?ico('search',11):''} Filtrar ${p}d</button>`).join('')}
-      </div>
-    </div>
-    ${(S.vendas&&S.vendas.length) ? dashChartSvg(per)
-      : `<div class="empty" style="padding:24px 16px"><h4>Nenhuma venda registrada ainda</h4><p>Use "Registrar venda" acima pra ver o gráfico ganhar forma.</p></div>`}
+    <div class="dash-chart-head"><h3 style="margin:0">Evolução do faturamento</h3></div>
+    ${!vendasF.length ? `<div class="empty" style="padding:24px 16px"><h4>Nenhuma venda ${periodoLabel}</h4><p>Use "Registrar venda" acima ou mude o filtro pra ver outro período.</p></div>`
+      : diaUnico ? `<div style="text-align:center;padding:20px 10px">
+          <b style="font-family:var(--display);font-size:2rem;color:var(--txt)">${brlD(gmvF)}</b>
+          <p class="dim" style="margin-top:6px">${vendasF.length} venda${vendasF.length>1?'s':''} ${periodoLabel}</p>
+        </div>`
+      : dashChartSvg(per)}
   </div>
 
  </div>`;
