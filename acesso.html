@@ -2856,9 +2856,8 @@ async function notificarVendaAprovada(comissao){
 }
 async function notificarVendasEmLote(qtd,comissaoTotal){
  const n=Math.max(1,+qtd||1);
- const porUnidade=Math.round((comissaoTotal/n)*100)/100;
  for(let i=0;i<n;i++){
-   await notificarVendaAprovada(porUnidade);
+   await notificarVendaAprovada(comissaoTotal);
    if(i<n-1) await new Promise(r=>setTimeout(r,1200)); // intervalo pra não sair tudo grudado
  }
 }
