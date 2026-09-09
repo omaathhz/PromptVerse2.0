@@ -2532,6 +2532,7 @@ function mountApp(){
   if(bg)bg.addEventListener('click',e=>{e.stopPropagation();toggleMenu()});
   const sc=$('#sideClose');
   if(sc)sc.addEventListener('click',e=>{e.stopPropagation();toggleSide(false)});
+  registrarServiceWorker();
   carregarPerfil();nav('dashboard');
 }
 function buildMenuPanel(){
@@ -2807,6 +2808,53 @@ async function chamarIA(payload){
  if(!r.ok)throw new Error(j.erro||'Não consegui completar essa ação.');
  return j;
 }
+
+/* ---------- Notificações push (venda aprovada) ---------- */
+const VAPID_PUBLIC_KEY='BBhx0iHG3yL6IOaLJdXCprhioKKBj_gx7Yca9G1AroDh9dXN950mxPILjv0BqGyKQkGHQhTH29xwSua3U_1Ff2s';
+function urlBase64ToUint8Array(base64String){
+ const padding='='.repeat((4-base64String.length%4)%4);
+ const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+ const raw=atob(base64);
+ const arr=new Uint8Array(raw.length);
+ for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+ return arr;
+}
+async function chamarPush(payload){
+ const r=await fetch(SB.url+'/functions/v1/push-venda',{method:'POST',
+   headers:{'Content-Type':'application/json','apikey':SB.key,'Authorization':'Bearer '+(SB.token||'')},
+   body:JSON.stringify(payload)});
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(j.erro||'Não consegui completar essa ação.');
+ return j;
+}
+function registrarServiceWorker(){
+ if(!('serviceWorker' in navigator))return;
+ navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+async function ativarNotificacoesPush(){
+ if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+   toast('Esse navegador não suporta notificação push. No iPhone, adicione o site à Tela de Início primeiro.');
+   return;
+ }
+ try{
+   const perm=await Notification.requestPermission();
+   if(perm!=='granted'){ toast('Permissão de notificação negada'); return; }
+   const reg=await navigator.serviceWorker.ready;
+   let sub=await reg.pushManager.getSubscription();
+   if(!sub){
+     sub=await reg.pushManager.subscribe({
+       userVisibleOnly:true,
+       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+     });
+   }
+   await chamarPush({acao:'inscrever',subscription:sub.toJSON()});
+   toast('Notificações ativadas! Você vai receber um aviso a cada venda aprovada.');
+ }catch(e){ toast('Não consegui ativar: '+String(e.message||e).slice(0,70)); }
+}
+async function notificarVendaAprovada(comissao){
+ try{ await chamarPush({acao:'notificar_venda',comissao}); }catch(e){ /* silencioso: não atrapalha o fluxo de registrar a venda */ }
+}
+
 async function carregarApis(){
  try{
    const r=await SB.get('v_minhas_apis?select=*');
@@ -5797,6 +5845,8 @@ VIEWS.dashboard={title:'Dashboard',sub:'Seus números de hoje',html(){
     <button class="btn btn-ghost" onclick="atualizarDashboard()">${ico('refresh',15)} Atualizar</button>
   </div>
 
+  <button class="btn btn-ghost btn-block" style="font-size:.82rem" onclick="ativarNotificacoesPush()">${ico('bell',14)} Ativar notificação de venda aprovada</button>
+
   <div class="dash-card dash-meta">
     <div class="dm-head">
       <span>${ico('sparkles',15)} Faturamento</span>
@@ -5936,6 +5986,7 @@ async function salvarVendaManual(){
    });
    closeModal();
    toast('Venda registrada');
+   notificarVendaAprovada(com);
    await carregarDados();
    nav('dashboard');
  }catch(e){ toast('Não consegui registrar: '+String(e.message||e).slice(0,60)); }
