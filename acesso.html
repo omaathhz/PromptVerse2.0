@@ -337,12 +337,12 @@ table.data td b{color:var(--txt);font-weight:600}
   backdrop-filter:blur(14px);transition:.2s}
 .dash-card:hover{border-color:var(--line-2)}
 .dash-hero{position:relative;overflow:hidden;border-radius:var(--r-lg);border:1px solid var(--line-2);
-  background:radial-gradient(120% 140% at 20% 0%,rgba(37,99,235,.35),rgba(5,8,22,.9) 60%);
-  box-shadow:var(--glow);padding:36px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:170px}
-.dash-hero-inner{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--txt)}
-.dash-hero-inner span{font-family:var(--display);font-size:1.1rem;letter-spacing:.02em}
-.dash-dots{display:flex;gap:6px}
-.dash-dots span{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.25)}
+  box-shadow:var(--glow);aspect-ratio:16/9;touch-action:pan-y}
+.dash-hero-track{display:flex;height:100%;transition:transform .4s cubic-bezier(.22,.61,.36,1)}
+.dash-hero-track.notransition{transition:none}
+.dash-hero-track img{width:100%;height:100%;object-fit:cover;flex:0 0 100%;-webkit-user-select:none;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.dash-dots{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:6px;z-index:2}
+.dash-dots span{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.4)}
 .dash-dots span.on{background:var(--blue-hi);width:16px;border-radius:99px}
 .dash-hello{font-family:var(--display);font-size:1.3rem;color:var(--txt);margin-top:4px}
 .dash-actions{display:flex;gap:10px}
@@ -5696,6 +5696,7 @@ Visual Cues & Vibe: shot on a prime 50mm lens equivalent. Ultra-realistic skin d
 ];
 
 const brlD=n=>'R$'+(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const DASH_BANNER=[VIDEO_BASE+'/dash-banner1.jpg',VIDEO_BASE+'/dash-banner2.jpg',VIDEO_BASE+'/dash-banner3.jpg',VIDEO_BASE+'/dash-banner4.jpg'];
 function dashVendasPorDia(dias){
  const hoje=new Date(); hoje.setHours(0,0,0,0);
  const dias0=+dias||7;
@@ -5751,9 +5752,11 @@ VIEWS.dashboard={title:'Dashboard',sub:'Seus números de hoje',html(){
  const pendentes=(S.vendas||[]).filter(v=>v.status==='pending').length;
  return `<div class="dash-wrap">
 
-  <div class="dash-hero">
-    <div class="dash-hero-inner">${ico('sparkles',30)}<span>PromptVerse 2.0</span></div>
-    <div class="dash-dots"><span class="on"></span><span></span><span></span></div>
+  <div class="dash-hero" id="dashHero">
+    <div class="dash-hero-track" id="dashHeroTrack">
+      ${DASH_BANNER.map(src=>`<img src="${src}" alt="" draggable="false">`).join('')}
+    </div>
+    <div class="dash-dots">${DASH_BANNER.map((_,i)=>`<span class="${i===0?'on':''}"></span>`).join('')}</div>
   </div>
 
   <h2 class="dash-hello">Olá, ${primeiroNome} <span>👋</span></h2>
@@ -5800,7 +5803,57 @@ VIEWS.dashboard={title:'Dashboard',sub:'Seus números de hoje',html(){
   </div>
 
  </div>`;
-},after(){}};
+},after(){dashHeroInit();}};
+
+let DASH_HERO_TIMER=null, DASH_HERO_IDX=0;
+function dashHeroGoTo(i,animar){
+ const track=$('#dashHeroTrack'); if(!track)return;
+ const n=DASH_BANNER.length;
+ DASH_HERO_IDX=((i%n)+n)%n;
+ track.classList.toggle('notransition',animar===false);
+ track.style.transform='translateX(-'+(DASH_HERO_IDX*100)+'%)';
+ document.querySelectorAll('#dashHero .dash-dots span').forEach((d,idx)=>d.classList.toggle('on',idx===DASH_HERO_IDX));
+}
+function dashHeroAuto(){
+ if(DASH_HERO_TIMER)clearInterval(DASH_HERO_TIMER);
+ DASH_HERO_TIMER=setInterval(()=>dashHeroGoTo(DASH_HERO_IDX+1),3000);
+}
+function dashHeroInit(){
+ const hero=$('#dashHero'), track=$('#dashHeroTrack');
+ if(!hero||!track)return;
+ DASH_HERO_IDX=0;
+ dashHeroGoTo(0,false);
+ dashHeroAuto();
+ let startX=0,curX=0,dragging=false,w=1;
+ function onMove(e){
+   if(!dragging)return;
+   curX=(e.touches?e.touches[0].clientX:e.clientX);
+   const dx=curX-startX;
+   track.style.transform='translateX(calc(-'+(DASH_HERO_IDX*100)+'% + '+dx+'px))';
+ }
+ function onUp(){
+   if(!dragging)return;
+   dragging=false;
+   track.classList.remove('notransition');
+   const dx=curX-startX;
+   if(Math.abs(dx)>w*0.15) dashHeroGoTo(DASH_HERO_IDX+(dx<0?1:-1));
+   else dashHeroGoTo(DASH_HERO_IDX);
+   dashHeroAuto();
+   window.removeEventListener('mousemove',onMove);
+   window.removeEventListener('mouseup',onUp);
+ }
+ function onDown(e){
+   dragging=true; startX=(e.touches?e.touches[0].clientX:e.clientX); curX=startX;
+   w=hero.getBoundingClientRect().width||1;
+   track.classList.add('notransition');
+   if(DASH_HERO_TIMER)clearInterval(DASH_HERO_TIMER);
+   if(!e.touches){ window.addEventListener('mousemove',onMove); window.addEventListener('mouseup',onUp); }
+ }
+ track.addEventListener('touchstart',onDown,{passive:true});
+ track.addEventListener('touchmove',onMove,{passive:true});
+ track.addEventListener('touchend',onUp);
+ track.addEventListener('mousedown',onDown);
+}
 
 async function atualizarDashboard(){
  toast('Atualizando...');
