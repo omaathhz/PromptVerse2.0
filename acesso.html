@@ -2854,6 +2854,14 @@ async function ativarNotificacoesPush(){
 async function notificarVendaAprovada(comissao){
  try{ await chamarPush({acao:'notificar_venda',comissao}); }catch(e){ /* silencioso: não atrapalha o fluxo de registrar a venda */ }
 }
+async function notificarVendasEmLote(qtd,comissaoTotal){
+ const n=Math.max(1,+qtd||1);
+ const porUnidade=Math.round((comissaoTotal/n)*100)/100;
+ for(let i=0;i<n;i++){
+   await notificarVendaAprovada(porUnidade);
+   if(i<n-1) await new Promise(r=>setTimeout(r,1200)); // intervalo pra não sair tudo grudado
+ }
+}
 
 async function carregarApis(){
  try{
@@ -5986,7 +5994,7 @@ async function salvarVendaManual(){
    });
    closeModal();
    toast('Venda registrada');
-   notificarVendaAprovada(com);
+   notificarVendasEmLote(qtd,com);
    await carregarDados();
    nav('dashboard');
  }catch(e){ toast('Não consegui registrar: '+String(e.message||e).slice(0,60)); }
