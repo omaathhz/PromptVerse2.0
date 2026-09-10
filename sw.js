@@ -8,7 +8,7 @@ self.addEventListener('push', event => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) { data = { body: event.data ? event.data.text() : '' }; }
 
-  const title = data.title || 'Venda aprovada';
+  const title = data.title || 'Venda aprovada!';
   const options = {
     body: data.body || '',
     icon: data.icon || '/logo.png',   // a logo do seu SaaS
