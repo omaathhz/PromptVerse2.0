@@ -326,6 +326,10 @@ table.data td b{color:var(--txt);font-weight:600}
 .gal-card{background:var(--card,#161616);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .gal-stage{position:relative;width:100%;aspect-ratio:9/16;max-height:56vh;overflow:hidden;background:#0d0d0d}
 .gal-stage video,.gal-stage img{width:100%;height:100%;object-fit:cover}
+.gal-stage .vid-play{display:none;z-index:3}
+.gal-stage.needtap .vid-play{display:grid}
+.gal-stage.playing .vid-play{display:none}
+.gal-stage video{cursor:pointer}
 .gal-tag{position:absolute;top:10px;left:10px;z-index:2;padding:5px 12px;border-radius:99px;font-size:.68rem;font-weight:700;
   letter-spacing:.03em;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff;border:1px solid rgba(255,255,255,.15)}
 .gal-body{padding:14px}
@@ -2560,6 +2564,7 @@ document.addEventListener('click',()=>$('#notifPop')?.classList.remove('on'));
 function nav(id){
   S.view=id;const v=VIEWS[id];if(!v)return;
   $('#viewTitle').textContent=v.title;$('#viewSub').textContent=v.sub;
+  if(typeof liberarVideos==='function')liberarVideos($('#view'));
   $('#view').innerHTML=v.html();paintIcons($('#view'));
   document.querySelectorAll('[data-nv]').forEach(b=>b.classList.toggle('on',b.dataset.nv===id));
   v.after&&v.after();
@@ -2626,26 +2631,12 @@ function movSrc(i){
 }
 function ugcWatch(){
  if(ugcIO){ugcIO.disconnect();ugcIO=null;}
- const vs=document.querySelectorAll('.ugc-stage video[data-i]');
- if(!vs.length)return;
- ugcIO=new IntersectionObserver(es=>es.forEach(e=>{
-   const v=e.target,i=+v.dataset.i;
-   if(e.isIntersecting){
-     if(!v.getAttribute('src')){
-       v.muted=true;v.setAttribute('src',movSrc(i));v.load();
-     }
-     const p=v.play();
-     if(p&&p.catch)p.catch(()=>{v.closest('.ugc-stage').classList.add('needtap');});
-   }else{v.pause();}
- }),{threshold:.2});
- vs.forEach(v=>ugcIO.observe(v));
+ ugcIO=observarVideos('.ugc-stage video[data-i]',v=>movSrc(+v.dataset.i));
 }
 /* toque manual quando o navegador bloqueia o autoplay */
 function tapMove(i,el){
  const v=el.querySelector('video');if(!v)return;
- v.muted=true;
- if(!v.getAttribute('src')){v.setAttribute('src',movSrc(i));v.load();}
- v.play().then(()=>el.classList.remove('needtap')).catch(()=>{});
+ v._visivel=true;tocarVideo(v,()=>movSrc(i));
 }
 function fullMove(i){
  const m=MOVES[i];if(!m.video&&!VIDEO_BASE)return;
@@ -6045,29 +6036,105 @@ function galeriaSrc(i){
  if(VIDEO_BASE&&c.video)return VIDEO_BASE+'/'+c.video;
  return c.video||'';
 }
-function armGaleriaVid(v,i){
- if(!v.getAttribute('src')){v.muted=true;v.setAttribute('src',galeriaSrc(i));v.load();}
+/* ===== Motor de vídeo (Galeria + Prompt Modelo UGC) =====
+   O iPhone só decodifica poucos vídeos ao mesmo tempo. Se muitos ficam
+   carregados, os novos travam no 1º quadro ("parece foto"). Por isso:
+   - só carrega o vídeo quando o card chega perto da tela;
+   - quando o card sai da tela, o vídeo é DESCARREGADO (libera o decodificador);
+   - limite de vídeos ativos ao mesmo tempo;
+   - vigia: se o vídeo está visível mas o tempo não anda, recarrega sozinho;
+   - ao voltar pro app (ex.: depois de colar o prompt no ChatGPT) retoma os visíveis. */
+const VID_MAX_ATIVOS=matchMedia('(max-width:820px)').matches?3:8;
+const vidAtivos=new Set();
+function liberarVideo(v){
+ if(!v)return;
+ try{v.pause();}catch(e){}
+ if(v.getAttribute('src')){v.removeAttribute('src');try{v.load();}catch(e){}}
+ v._ultimoT=-1;v._travas=0;vidAtivos.delete(v);
+ const st=v.parentElement;if(st){st.classList.remove('playing');}
 }
+function liberarVideos(root){
+ (root||document).querySelectorAll('video').forEach(liberarVideo);
+ vidAtivos.clear();
+}
+function tocarVideo(v,srcFn){
+ const st=v.parentElement;
+ if(!v.getAttribute('src')){
+   v.muted=true;v.defaultMuted=true;v.playsInline=true;
+   v.setAttribute('src',srcFn());v.load();
+ }
+ vidAtivos.add(v);
+ /* respeita o limite: descarrega o mais antigo que não está visível, senão o mais antigo */
+ if(vidAtivos.size>VID_MAX_ATIVOS){
+   const lista=[...vidAtivos].filter(x=>x!==v);
+   const fora=lista.find(x=>!x._visivel)||lista[0];
+   liberarVideo(fora);
+ }
+ const ok=()=>{st.classList.remove('needtap');st.classList.add('playing');};
+ const falhou=()=>{
+   /* ainda sem dados: tenta de novo quando puder tocar */
+   v.addEventListener('canplay',function uma(){v.removeEventListener('canplay',uma);
+     if(!v._visivel)return;
+     const p2=v.play();if(p2&&p2.then)p2.then(ok).catch(()=>st.classList.add('needtap'));},{once:true});
+ };
+ const p=v.play();
+ if(p&&p.then)p.then(ok).catch(falhou);
+}
+/* vigia de travamento: roda a cada 2s só enquanto houver vídeo ativo */
+setInterval(()=>{
+ if(document.hidden)return;
+ vidAtivos.forEach(v=>{
+   if(!v.isConnected){vidAtivos.delete(v);return;}
+   if(!v._visivel)return;
+   const st=v.parentElement;
+   if(v.paused&&!st.classList.contains('needtap')){v.play().catch(()=>{});return;}
+   if(!v.paused&&v.readyState>=3&&v.currentTime===v._ultimoT){
+     v._travas=(v._travas||0)+1;
+     if(v._travas>=2){ /* travou: recarrega do ponto zero */
+       const src=v.getAttribute('src');v._travas=0;
+       if(src){v.removeAttribute('src');v.load();v.setAttribute('src',src);v.load();
+         v.play().catch(()=>st.classList.add('needtap'));}
+     }
+   }else v._travas=0;
+   v._ultimoT=v.currentTime;
+ });
+},2000);
+/* voltar pro app: retoma o que está visível */
+function retomarVisiveis(){
+ if(document.hidden)return;
+ document.querySelectorAll('#view video').forEach(v=>{
+   if(v._visivel&&v._srcFn){liberarVideo(v);tocarVideo(v,v._srcFn);}
+ });
+}
+document.addEventListener('visibilitychange',retomarVisiveis);
+window.addEventListener('pageshow',retomarVisiveis);
+
+function observarVideos(seletor,srcDe){
+ const vs=document.querySelectorAll(seletor);
+ if(!vs.length)return null;
+ const io=new IntersectionObserver(es=>es.forEach(e=>{
+   const v=e.target;
+   v._visivel=e.isIntersecting;
+   if(e.isIntersecting){v._srcFn=()=>srcDe(v);tocarVideo(v,v._srcFn);}
+   else liberarVideo(v);
+ }),{threshold:.25,rootMargin:'120px 0px'});
+ vs.forEach(v=>{
+   v._srcFn=()=>srcDe(v);
+   /* toque no vídeo: se estiver parado, toca */
+   v.addEventListener('click',()=>{if(v.paused){v._visivel=true;tocarVideo(v,v._srcFn);}});
+   io.observe(v);
+ });
+ return io;
+}
+
 function playGaleria(i){
  const st=$('#galst'+i),v=st&&st.querySelector('video');if(!v)return;
- armGaleriaVid(v,i);
- const p=v.play();
- if(p&&p.then)p.then(()=>{st.classList.remove('needtap');st.classList.add('playing');}).catch(()=>{});
+ v._visivel=true;tocarVideo(v,()=>galeriaSrc(i));
 }
 let galeriaIO=null;
 function galeriaWatch(){
  if(galeriaIO){galeriaIO.disconnect();galeriaIO=null;}
- const vs=document.querySelectorAll('.gal-stage video[data-gi]');
- if(!vs.length)return;
- galeriaIO=new IntersectionObserver(es=>es.forEach(e=>{
-   const v=e.target,i=+v.dataset.gi,st=v.closest('.gal-stage');
-   if(e.isIntersecting){
-     armGaleriaVid(v,i);
-     const p=v.play();
-     if(p&&p.then)p.then(()=>{st.classList.remove('needtap');st.classList.add('playing');}).catch(()=>{st.classList.add('needtap');});
-   }else{v.pause();st.classList.remove('playing');}
- }),{threshold:.2});
- vs.forEach(v=>galeriaIO.observe(v));
+ galeriaIO=observarVideos('.gal-stage video[data-gi]',v=>galeriaSrc(+v.dataset.gi));
 }
 
 /* ---------- PROMPTS BÔNUS (29) ---------- */
