@@ -326,9 +326,8 @@ table.data td b{color:var(--txt);font-weight:600}
 .gal-card{background:var(--card,#161616);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .gal-stage{position:relative;width:100%;aspect-ratio:9/16;max-height:56vh;overflow:hidden;background:#0d0d0d}
 .gal-stage video,.gal-stage img{width:100%;height:100%;object-fit:cover}
-.gal-stage .vid-play{display:none;z-index:3}
-.gal-stage.needtap .vid-play{display:grid}
-.gal-stage.playing .vid-play{display:none}
+.gal-stage .vid-play,.gal-stage.needtap .vid-play{display:none!important}
+.ugc-stage .ugc-tap,.ugc-stage.needtap .ugc-tap{display:none!important}
 .gal-stage video{cursor:pointer}
 .gal-tag{position:absolute;top:10px;left:10px;z-index:2;padding:5px 12px;border-radius:99px;font-size:.68rem;font-weight:700;
   letter-spacing:.03em;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:#fff;border:1px solid rgba(255,255,255,.15)}
@@ -6087,7 +6086,7 @@ setInterval(()=>{
    if(!v.isConnected){vidAtivos.delete(v);return;}
    if(!v._visivel)return;
    const st=v.parentElement;
-   if(v.paused&&!st.classList.contains('needtap')){v.play().catch(()=>{});return;}
+   if(v.paused){const p=v.play();if(p&&p.then)p.then(()=>{st.classList.remove('needtap');st.classList.add('playing');}).catch(()=>{});return;}
    if(!v.paused&&v.readyState>=3&&v.currentTime===v._ultimoT){
      v._travas=(v._travas||0)+1;
      if(v._travas>=2){ /* travou: recarrega do ponto zero */
@@ -6107,6 +6106,19 @@ function retomarVisiveis(){
  });
 }
 document.addEventListener('visibilitychange',retomarVisiveis);
+/* Modo de Pouca Energia do iPhone bloqueia o autoplay até existir um toque na página.
+   Qualquer toque/rolagem na tela já dá play em todos os vídeos visíveis. */
+function destravarVisiveis(){
+ document.querySelectorAll('#view video').forEach(v=>{
+   if(!v._visivel||!v.paused||!v._srcFn)return;
+   const st=v.parentElement;
+   if(!v.getAttribute('src')){v.muted=true;v.setAttribute('src',v._srcFn());v.load();vidAtivos.add(v);}
+   const p=v.play();
+   if(p&&p.then)p.then(()=>{st.classList.remove('needtap');st.classList.add('playing');}).catch(()=>{});
+ });
+}
+['touchstart','touchend','pointerup','click','keydown'].forEach(ev=>
+ document.addEventListener(ev,destravarVisiveis,{capture:true,passive:true}));
 window.addEventListener('pageshow',retomarVisiveis);
 
 function observarVideos(seletor,srcDe){
