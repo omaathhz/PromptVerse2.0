@@ -1602,7 +1602,7 @@ async function carregarDados(){
     S.vendas=vendas;
     S.kpi={gmv:aprovadas.reduce((a,v)=>a+ +v.gmv,0),
            com:aprovadas.reduce((a,v)=>a+ +v.commission,0),
-           qtd:aprovadas.length};
+           qtd:somarQtd(aprovadas)};
   }
   if(segs.length)S.seguidores=segs[0].followers_count;
   S.notifs=mapearNotifs(notifs);
@@ -3093,15 +3093,16 @@ async function ativarNotificacoesPush(){
    toast('Notificações ativadas! Você vai receber um aviso a cada venda aprovada.');
  }catch(e){ toast('Não consegui ativar: '+String(e.message||e).slice(0,70)); }
 }
-async function notificarVendaAprovada(comissao){
- try{ await chamarPush({acao:'notificar_venda',comissao}); }catch(e){ /* silencioso: não atrapalha o fluxo de registrar a venda */ }
-}
-async function notificarVendasEmLote(qtd,comissaoTotal){
- const n=Math.max(1,+qtd||1);
- for(let i=0;i<n;i++){
-   await notificarVendaAprovada(comissaoTotal);
-   if(i<n-1) await new Promise(r=>setTimeout(r,1200)); // intervalo pra não sair tudo grudado
- }
+async function notificarVendaAprovada(comissao){ return notificarVendasEmLote(1,comissao); }
+/* Uma única chamada: o servidor dispara as N notificações.
+   Assim elas saem mesmo que o app seja fechado logo depois de registrar. */
+function notificarVendasEmLote(qtd,comissaoTotal){
+ const corpo=JSON.stringify({acao:'notificar_venda',comissao:comissaoTotal,qtd:Math.max(1,+qtd||1)});
+ try{
+   return fetch(SB.url+'/functions/v1/push-venda',{method:'POST',keepalive:true,
+     headers:{'Content-Type':'application/json','apikey':SB.key,'Authorization':'Bearer '+(SB.token||'')},
+     body:corpo}).catch(()=>{});
+ }catch(e){ return Promise.resolve(); }
 }
 
 async function carregarApis(){
@@ -6023,6 +6024,14 @@ Use the attached image as visual reference for the woman's facial structure, ski
 Visual Cues & Vibe: shot on a prime 50mm lens equivalent. Ultra-realistic skin detail with visible pores, texture variation, under-eye shadows, fine lines, and natural imperfections. No skin smoothing. No beauty filter. No artificial glow. Natural daylight-balanced lighting with soft neutral color grading. Shallow depth of field emphasizing real skin texture. Organic handheld motion mimicking authentic skincare routine footage. No stylization, no over-processing, no plastic skin effect.`}
 ];
 
+/* quantas vendas cada registro representa (o registro manual pode ter várias) */
+function qtdVenda(v){
+ if(!v)return 1;
+ if(v.quantity!=null&&+v.quantity>0)return +v.quantity;
+ const m=/\((\d+)\)\s*$/.exec(v.product_name||'');
+ return m?Math.max(1,+m[1]):1;
+}
+function somarQtd(lista){return (lista||[]).reduce((a,v)=>a+qtdVenda(v),0);}
 const brlD=n=>'R$'+(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const DASH_BANNER=[VIDEO_BASE+'/dash-banner1.jpg',VIDEO_BASE+'/dash-banner2.jpg',VIDEO_BASE+'/dash-banner3.jpg',VIDEO_BASE+'/dash-banner4.jpg'];
 function dashIntervalo(per){
@@ -6098,7 +6107,8 @@ VIEWS.dashboard={title:'Dashboard',sub:'Seus números de hoje',html(){
  const vendasF=dashFiltrarVendas(per);
  const gmvF=vendasF.reduce((a,v)=>a+ +v.gmv,0);
  const comF=vendasF.reduce((a,v)=>a+ +v.commission,0);
- const ticketF=vendasF.length?gmvF/vendasF.length:0;
+ const qtdF=somarQtd(vendasF);
+ const ticketF=qtdF?gmvF/qtdF:0;
  const diaUnico=dashEhDiaUnico(per);
  const dataInput=per.startsWith&&per.startsWith('data:')?per.slice(5):'';
  const hojeISO=new Date().toISOString().slice(0,10);
@@ -6167,7 +6177,7 @@ VIEWS.dashboard={title:'Dashboard',sub:'Seus números de hoje',html(){
     ${!vendasF.length ? `<div class="empty" style="padding:24px 16px"><h4>Nenhuma venda ${periodoLabel}</h4><p>Use "Registrar venda" acima ou mude o filtro pra ver outro período.</p></div>`
       : diaUnico ? `<div style="text-align:center;padding:20px 10px">
           <b style="font-family:var(--display);font-size:2rem;color:var(--txt)">${brlD(gmvF)}</b>
-          <p class="dim" style="margin-top:6px">${vendasF.length} venda${vendasF.length>1?'s':''} ${periodoLabel}</p>
+          <p class="dim" style="margin-top:6px">${qtdF} venda${qtdF>1?'s':''} ${periodoLabel}</p>
         </div>`
       : dashChartSvg(per)}
   </div>
@@ -6255,10 +6265,10 @@ async function salvarVendaManual(){
  if(!data){toast('Escolha uma data');return;}
  if(gmv<=0){toast('Informe o valor bruto total');return;}
  try{
-   await SB.insert('sales',{
-     user_id:SB.uid, product_name:'Venda manual ('+qtd+')',
-     gmv, commission:com, status:'approved', sale_date:data
-   });
+   const linha={user_id:SB.uid, product_name:'Venda manual ('+qtd+')',
+     gmv, commission:com, status:'approved', sale_date:data, quantity:qtd};
+   try{ await SB.insert('sales',linha); }
+   catch(e){ delete linha.quantity; await SB.insert('sales',linha); }
    closeModal();
    toast('Venda registrada');
    const brl=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
