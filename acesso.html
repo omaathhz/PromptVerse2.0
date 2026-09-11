@@ -533,6 +533,17 @@ button,a,.chip,.tab,.nv{-webkit-tap-highlight-color:rgba(59,130,246,.28);touch-a
 .mm-ph span{font-family:var(--mono);font-size:.64rem;letter-spacing:.12em}
 .mm-stage.ok .mm-ph{display:none}
 .mm-btn{font-size:.72rem;padding:10px 12px}
+.mm-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;padding:5px;
+  background:var(--glass);border:1px solid var(--line);border-radius:15px}
+.mm-tab{border:0;background:transparent;color:var(--txt-2);font:inherit;font-weight:700;font-size:.8rem;
+  letter-spacing:.06em;padding:12px 10px;border-radius:11px;cursor:pointer;transition:.2s;
+  display:flex;align-items:center;justify-content:center;gap:7px}
+.mm-tab small{font-family:var(--mono);font-size:.62rem;opacity:.7;font-weight:500}
+.mm-tab.on{background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#F8FAFC;box-shadow:0 6px 20px rgba(37,99,235,.35)}
+.mm-painel{display:none}.mm-painel.on{display:block}
+.mm-vazio{border:1px dashed var(--line);border-radius:16px;padding:34px 20px;text-align:center;color:var(--txt-2)}
+.mm-vazio b{display:block;color:#F8FAFC;margin:10px 0 4px}
+.mm-vazio span{font-size:.82rem}
 @media(max-width:900px){.mm-steps{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){
   .mm-grid{grid-template-columns:1fr;gap:18px}
@@ -3036,48 +3047,74 @@ async function gerarVideo(){
 }
 
 /* ---------- MODELOS PARA MODELAR ---------- */
-/* As 50 fotos ficam na pasta /modelos, nomeadas modelo-01.jpg ate modelo-50.jpg.
-   Nao precisa mexer em codigo: basta subir os arquivos com esses nomes.
-   Se alguma foto for .png ou .webp, adicione o numero em MODELOS_EXT abaixo. */
-const MODELOS_BASE='modelos';
-const MODELOS_TOTAL=49;   /* suba mais fotos e aumente este numero ate 50 */
-const MODELOS_EXT={};              /* ex.: {3:'png', 17:'webp'} */
+/* Duas abas: FEMININAS e MASCULINOS.
+   - Femininas: pasta /modelos, arquivos modelo-01.jpg, modelo-02.jpg...
+   - Masculinos: pasta /modelos-masculinos, arquivos masculino-01.jpg, masculino-02.jpg...
+   Para adicionar fotos: suba os arquivos com esses nomes e aumente o TOTAL da aba.
+   Se alguma foto for .png ou .webp, coloque o número em EXT (ex.: {3:'png'}). */
+const MM_CATS={
+ fem:{rotulo:'Femininas', base:'modelos',             prefixo:'modelo',    total:49, ext:{}, nome:'Modelo'},
+ masc:{rotulo:'Masculinos',base:'modelos-masculinos', prefixo:'masculino', total:60, ext:{}, nome:'Modelo'}
+};
+let mmAba='fem';
 function modeloNum(i){ return String(i).padStart(2,'0'); }
-function modeloSrc(i){ return MODELOS_BASE+'/modelo-'+modeloNum(i)+'.'+(MODELOS_EXT[i]||'jpg'); }
+function modeloSrc(cat,i){ const c=MM_CATS[cat]; return c.base+'/'+c.prefixo+'-'+modeloNum(i)+'.'+(c.ext[i]||'jpg'); }
 
-VIEWS.modelos={title:'Modelos para modelar',sub:'Biblioteca de rostos 3x4 para usar como base nas suas IAs',html(){
+function mmGrade(cat){
+ const c=MM_CATS[cat];
+ if(!c.total){
+   return `<div class="mm-vazio">${ico('user',26)}<b>Em breve</b>
+     <span>Novos modelos ${c.rotulo.toLowerCase()} estão sendo adicionados.</span></div>`;
+ }
  let g='';
- for(let i=1;i<=MODELOS_TOTAL;i++){
-   const src=modeloSrc(i), n=modeloNum(i);
-   g+=`<div class="mm-card" data-mm="${n}">
+ for(let i=1;i<=c.total;i++){
+   const src=modeloSrc(cat,i), n=modeloNum(i);
+   g+=`<div class="mm-card" data-mm="${cat}-${n}">
      <div class="mm-stage">
-       <img src="${src}" alt="Modelo ${n}" loading="lazy"
+       <img src="${src}" alt="${c.nome} ${n}" loading="lazy"
             onload="this.parentNode.classList.add('ok')"
             onerror="this.remove();this.parentNode.classList.add('vazio')">
-       <div class="mm-ph">${ico('user',24)}<span>Modelo ${n}</span></div>
+       <div class="mm-ph">${ico('user',24)}<span>${c.nome} ${n}</span></div>
      </div>
-     <button class="btn btn-primary btn-block mm-btn" onclick="baixarModelo(${i})">${ico('dl',14)} BAIXAR</button>
+     <button class="btn btn-primary btn-block mm-btn" onclick="baixarModelo('${cat}',${i})">${ico('dl',14)} BAIXAR</button>
    </div>`;
  }
+ return `<div class="mm-grid">${g}</div>`;
+}
+
+function trocarAbaModelos(cat){
+ mmAba=cat;
+ document.querySelectorAll('.mm-tab').forEach(b=>b.classList.toggle('on',b.dataset.cat===cat));
+ document.querySelectorAll('.mm-painel').forEach(p=>p.classList.toggle('on',p.dataset.cat===cat));
+}
+
+VIEWS.modelos={title:'Modelos para modelar',sub:'Biblioteca de rostos 3x4 para usar como base nas suas IAs',html(){
+ const abas=Object.keys(MM_CATS).map(k=>
+   `<button class="mm-tab${k===mmAba?' on':''}" data-cat="${k}" onclick="trocarAbaModelos('${k}')">
+      ${MM_CATS[k].rotulo.toUpperCase()} <small>${MM_CATS[k].total||'—'}</small></button>`).join('');
+ const paineis=Object.keys(MM_CATS).map(k=>
+   `<div class="mm-painel${k===mmAba?' on':''}" data-cat="${k}">${mmGrade(k)}</div>`).join('');
  return `<div class="mm-intro">
    <p>Baixe qualquer modelo disponível abaixo e utilize a imagem em ferramentas de
    Inteligência Artificial como ChatGPT, Gemini, Flow e outras plataformas compatíveis
-   para criar sua própria modelo personalizada. Você pode alterar cabelo, olhos, nariz,
+   para criar seu próprio modelo personalizado. Você pode alterar cabelo, olhos, nariz,
    boca, tom de pele, roupas, cenário, poses e muito mais.</p>
  </div>
  <div class="mm-steps">
-   ${[['Escolha uma modelo da biblioteca.'],
+   ${[['Escolha um modelo da biblioteca.'],
       ['Clique em BAIXAR.'],
       ['Salve a foto no celular ou computador.'],
       ['Envie a foto para uma IA compatível.'],
-      ['Personalize a modelo utilizando prompts e características desejadas.']]
+      ['Personalize o modelo utilizando prompts e características desejadas.']]
      .map((t,i)=>`<div class="mm-step"><b>PASSO ${i+1}</b><span>${t[0]}</span></div>`).join('')}
  </div>
- <div class="mm-grid">${g}</div>`;
+ <div class="mm-tabs">${abas}</div>
+ ${paineis}`;
 }};
 
-async function baixarModelo(i){
- const src=modeloSrc(i), nome='promptverse-modelo-'+modeloNum(i)+'.'+(MODELOS_EXT[i]||'jpg');
+async function baixarModelo(cat,i){
+ const src=modeloSrc(cat,i), c=MM_CATS[cat];
+ const nome='promptverse-'+c.prefixo+'-'+modeloNum(i)+'.'+(c.ext[i]||'jpg');
  try{
    const r=await fetch(src);
    if(!r.ok)throw new Error('nao encontrada');
@@ -3086,7 +3123,7 @@ async function baixarModelo(i){
    a.href=u; a.download=nome;
    document.body.appendChild(a); a.click(); a.remove();
    setTimeout(()=>URL.revokeObjectURL(u),4000);
-   toast('Modelo '+modeloNum(i)+' baixado');
+   toast(c.nome+' '+modeloNum(i)+' baixado');
  }catch(e){
    const a=document.createElement('a'); a.href=src; a.download=nome; a.target='_blank'; a.rel='noopener';
    document.body.appendChild(a); a.click(); a.remove();
