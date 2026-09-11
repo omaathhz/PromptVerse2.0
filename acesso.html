@@ -935,6 +935,102 @@ html{overflow-x:hidden}
   background:linear-gradient(135deg,var(--blue-hi),var(--blue) 55%,#1b4fd1);box-shadow:0 16px 40px -16px rgba(59,130,246,.95);transition:.22s}
 .btn-copy-big:hover{transform:translateY(-2px);box-shadow:0 22px 50px -18px rgba(59,130,246,1)}
 .bonus-how{font-family:var(--display);font-weight:600;font-size:.84rem;color:var(--txt-2);margin-bottom:12px}
+
+/* =====================================================================
+   MODO CLARO — só troca cores. Escuro continua sendo o padrão.
+   Ativado por <html data-theme="light"> (botão sol/lua no topo ou em Minha conta).
+   ===================================================================== */
+html[data-theme="light"]{
+  --ink:#F3F5FA;--graphite:#FFFFFF;--white:#0F172A;
+  --txt:#0F172A;--txt-2:#475569;--txt-3:#64748B;
+  --line:rgba(15,23,42,.10);--line-2:rgba(37,99,235,.32);
+  --glass:rgba(255,255,255,.9);--glass-2:rgba(255,255,255,.95);--card:#FFFFFF;
+  --glow:0 0 0 1px rgba(37,99,235,.18),0 18px 40px -24px rgba(37,99,235,.35);
+  color-scheme:light}
+html[data-theme="light"] body{background:var(--ink);color:var(--txt)}
+html[data-theme="light"] .card{box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px -16px rgba(15,23,42,.18)}
+html[data-theme="light"] .aura::before{opacity:.35}
+html[data-theme="light"] .aura::after{background:radial-gradient(circle,rgba(37,99,235,.14),transparent 64%)}
+html[data-theme="light"] .grid-bg{background-image:linear-gradient(rgba(15,23,42,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,.05) 1px,transparent 1px)}
+html[data-theme="light"] .av,html[data-theme="light"] .btn-primary,html[data-theme="light"] .btn-copy-big{color:#fff}
+html[data-theme="light"] .seg button.on,html[data-theme="light"] .chip.on,html[data-theme="light"] .tab.on,html[data-theme="light"] .nv.on{color:#1D4ED8}
+html[data-theme="light"] .mm-tab.on{color:#fff}
+html[data-theme="light"] ::-webkit-scrollbar-thumb{background:rgba(15,23,42,.18)}
+html[data-theme="light"] [style*="color:#6ee7a8"]{color:#15803d!important}
+html[data-theme="light"] [style*="color:#f8a3a3"]{color:#b91c1c!important}
+html[data-theme="light"] [style*="color:#3b4257"]{color:#94a3b8!important}
+html[data-theme="light"] [style*="rgba(8,31,92,.32)"]{background:rgba(37,99,235,.07)!important}
+html[data-theme="light"] input::placeholder,html[data-theme="light"] textarea::placeholder{color:#94a3b8}
+html[data-theme="light"] select option{background:#fff;color:#0F172A}
+/* troca suave */
+html.tema-anim,html.tema-anim *{transition:background-color .25s,color .25s,border-color .25s!important}
+.tema-seg{display:flex;gap:4px;padding:4px;border-radius:99px;border:1px solid var(--line);background:rgba(148,163,201,.06)}
+.tema-seg button{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;font-size:.8rem;font-weight:600;color:var(--txt-2);transition:.18s}
+.tema-seg button.on{background:linear-gradient(135deg,#3B82F6,#2563EB);color:#fff}
+/* regras geradas a partir das cores fixas do tema escuro */
+html[data-theme="light"] .btn-ghost{background:rgba(15,23,42,0.03)}
+html[data-theme="light"] .badge-blue{color:#0441c8}
+html[data-theme="light"] .badge-soft{background:rgba(15,23,42,0.06)}
+html[data-theme="light"] .tab.on{color:#11141d}
+html[data-theme="light"] .input,html[data-theme="light"] select.input,html[data-theme="light"] textarea.input{background:rgba(15,23,42,0.04)}
+html[data-theme="light"] .nv:hover{background:rgba(15,23,42,0.05);color:#11141d}
+html[data-theme="light"] .nv.on{color:#11141d}
+html[data-theme="light"] .top{background:rgba(246,247,250,0.82)}
+html[data-theme="light"] .icon-btn:hover{color:#11141d}
+html[data-theme="light"] .side.open{box-shadow:0 0 60px rgba(15,23,42,0.245)}
+html[data-theme="light"] .nt:hover{background:rgba(15,23,42,0.04)}
+html[data-theme="light"] .trend.down{color:#be0e0e}
+html[data-theme="light"] .seg{background:rgba(15,23,42,0.04)}
+html[data-theme="light"] .seg button.on{color:#11141d}
+html[data-theme="light"] .chip:hover{color:#11141d}
+html[data-theme="light"] .chip.on{color:#11141d}
+html[data-theme="light"] .gal-card{background:var(--card,#eff1f7)}
+html[data-theme="light"] .dash-dots span{background:rgba(15,23,42,0.4)}
+html[data-theme="light"] .prompt-out{color:#1d4caf;background:rgba(222,230,252,0.35)}
+html[data-theme="light"] .msg.ai{background:rgba(15,23,42,0.05)}
+html[data-theme="light"] .cal .cell.has{color:#11141d}
+html[data-theme="light"] .bar{background:rgba(15,23,42,0.07)}
+html[data-theme="light"] .modal-card{background:linear-gradient(170deg,rgba(222,230,252,0.6),rgba(246,247,250,0.97));box-shadow:0 40px 90px -30px rgba(15,23,42,0.35)}
+html[data-theme="light"] .modal-head{background:rgba(246,247,250,0.9)}
+html[data-theme="light"] .mp.on{color:#11141d}
+html[data-theme="light"] .btn-lock{background:rgba(15,23,42,0.03)}
+html[data-theme="light"] .btn-lock:hover{color:#0441c8}
+html[data-theme="light"] .imp-map select{background:rgba(239,241,247,0.8)}
+html[data-theme="light"] .imp-prev th{background:rgba(239,241,247,0.7)}
+html[data-theme="light"] .mm-intro{background:linear-gradient(150deg,rgba(222,230,252,0.5),rgba(239,241,247,0.7))}
+html[data-theme="light"] .mm-vazio b{color:#11141d}
+html[data-theme="light"] .ps-dot{background:#abb6d2}
+html[data-theme="light"] .cg-drop{background:#f6f7fa}
+html[data-theme="light"] .api-card:hover{box-shadow:0 12px 28px rgba(15,23,42,0.105)}
+html[data-theme="light"] .gen-opts select,html[data-theme="light"] .gen-sel{background:rgba(239,241,247,0.8)}
+html[data-theme="light"] .gen-txt{background:rgba(239,241,247,0.8)}
+html[data-theme="light"] .lib-card:hover{box-shadow:0 12px 28px rgba(15,23,42,0.112)}
+html[data-theme="light"] .vid-card:hover{box-shadow:0 14px 32px rgba(15,23,42,0.119)}
+html[data-theme="light"] .gan-tab{background:rgba(239,241,247,0.6)}
+html[data-theme="light"] .gan-card:hover{box-shadow:0 14px 30px rgba(15,23,42,0.112)}
+html[data-theme="light"] .free-card:hover{box-shadow:0 18px 40px rgba(15,23,42,0.133)}
+html[data-theme="light"] .tool-link{background:rgba(239,241,247,0.6)}
+html[data-theme="light"] .vid-card:hover{box-shadow:0 14px 32px rgba(15,23,42,0.119)}
+html[data-theme="light"] .aula-card:hover{box-shadow:0 16px 36px rgba(15,23,42,0.119)}
+html[data-theme="light"] .aula-num{background:rgba(246,247,250,0.66)}
+html[data-theme="light"] .lib-card:hover{box-shadow:0 12px 28px rgba(15,23,42,0.112)}
+html[data-theme="light"] .ugc-card:hover{box-shadow:0 14px 34px rgba(15,23,42,0.119)}
+
+/* ===== BARRA SUPERIOR FIXA (fica no topo ao rolar) ===== */
+:root{--top-h:67px}
+html{scroll-padding-top:calc(var(--top-h) + 10px)}
+.top{position:fixed!important;top:0;left:var(--sidebar);right:0;
+  padding-top:calc(14px + env(safe-area-inset-top,0px))}
+.main{padding-top:var(--top-h)}
+.top{background:rgba(13,13,13,.94)}
+html[data-theme="light"] .top{background:rgba(246,247,250,.95)}
+@media(max-width:1000px){
+  .top{left:0;padding-top:calc(12px + env(safe-area-inset-top,0px))}
+  /* menu das 3 barrinhas abre logo abaixo da barra, onde você estiver na página */
+  .menu-panel.on{position:fixed;top:var(--top-h);left:0;right:0;z-index:29;
+    max-height:calc(100dvh - var(--top-h));overflow-y:auto;-webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;box-shadow:0 18px 40px -18px rgba(0,0,0,.6)}
+}
 </style>
 </head>
 <body>
@@ -1352,6 +1448,7 @@ html{overflow-x:hidden}
           <div class="sub" id="viewSub">Seus números de hoje</div>
         </div>
         <div class="top-actions">
+          <button class="icon-btn" id="btnTema" onclick="alternarTema()" aria-label="Alternar modo claro e escuro" title="Modo claro / escuro"><i data-ic="sun"></i></button>
           <div style="position:relative">
             <button class="icon-btn" onclick="togglePop(event)" aria-label="Notificações"><i data-ic="bell"></i><i class="dot-alert"></i></button>
             <div class="card pop" id="notifPop"></div>
@@ -1525,7 +1622,9 @@ const ICONS={
  fire:'<path d="M12 3s5 4 5 9a5 5 0 01-10 0c0-2 1-3 1-3s1 1.5 2 1.5S12 6 12 3z"/>',
  dl:'<path d="M12 4v11M7 11l5 5 5-5"/><path d="M5 20h14"/>',
  refresh:'<path d="M20 11a8 8 0 10-2 6"/><path d="M20 5v6h-6"/>',
- img:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-4 4-3-3-5 5"/>'
+ img:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-4 4-3-3-5 5"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+ moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'
 };
 function ico(n,sz=18){return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]||''}</svg>`}
 function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(el=>{
@@ -1577,7 +1676,29 @@ function selectManual(){const t=$('#manualCopy');if(t){t.focus();t.select();t.se
 function openModal(html){$('#modalCard').innerHTML=html;$('#modal').classList.add('on');paintIcons($('#modalCard'));}
 function closeModal(){$('#modal').classList.remove('on');}
 function jump(sel){const el=$(sel);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
-function go(screen){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$('#screen-'+screen).classList.add('on');window.scrollTo(0,0);}
+function go(screen){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$('#screen-'+screen).classList.add('on');window.scrollTo(0,0);aplicarTema();if(window.medirTopo)setTimeout(medirTopo,0);}
+
+/* ===== MODO CLARO / ESCURO ===== */
+function temaSalvo(){ try{ return localStorage.getItem('pv2_tema')==='light'?'light':'dark'; }catch(e){ return 'dark'; } }
+function aplicarTema(){
+ const noApp=!!document.querySelector('#screen-app.on');
+ const t=noApp?temaSalvo():'dark';
+ if(t==='light')document.documentElement.setAttribute('data-theme','light');
+ else document.documentElement.removeAttribute('data-theme');
+ let m=document.querySelector('meta[name="theme-color"]');
+ if(!m){m=document.createElement('meta');m.name='theme-color';document.head.appendChild(m);}
+ m.content=t==='light'?'#F3F5FA':'#0D0D0D';
+ const b=document.getElementById('btnTema');
+ if(b){b.innerHTML=ico(t==='light'?'moon':'sun',18);b.title=t==='light'?'Mudar para modo escuro':'Mudar para modo claro';}
+ document.querySelectorAll('.tema-seg button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
+}
+function definirTema(t){
+ try{ localStorage.setItem('pv2_tema',t==='light'?'light':'dark'); }catch(e){}
+ const h=document.documentElement; h.classList.add('tema-anim');
+ aplicarTema();
+ setTimeout(()=>h.classList.remove('tema-anim'),350);
+}
+function alternarTema(){ definirTema(temaSalvo()==='light'?'dark':'light'); }
 
 /* =============== GRÁFICOS =============== */
 function curve(vals,w,h,pad){
@@ -2558,12 +2679,24 @@ function buildMenuPanel(){
   p.querySelectorAll('[data-mp]').forEach(b=>b.addEventListener('click',()=>{nav(b.dataset.mp)}));
   $('#mpOut').addEventListener('click',logout);
 }
+/* altura da barra fixa -> espaço no conteúdo */
+(function(){
+ function medir(){const t=document.querySelector('#screen-app .top');if(!t)return;
+   const h=t.offsetHeight;if(h)document.documentElement.style.setProperty('--top-h',h+'px');}
+ window.addEventListener('resize',medir);window.addEventListener('orientationchange',()=>setTimeout(medir,300));
+ document.addEventListener('DOMContentLoaded',()=>{
+   const t=document.querySelector('#screen-app .top');
+   if(t&&window.ResizeObserver)new ResizeObserver(medir).observe(t);
+   medir();
+ });
+ window.medirTopo=medir;
+})();
 function toggleMenu(force){
   const p=$('#menuPanel');if(!p)return;
   const on=typeof force==='boolean'?force:!p.classList.contains('on');
   p.classList.toggle('on',on);
   const b=document.querySelector('.burger');if(b&&b.setAttribute)b.setAttribute('aria-expanded',on?'true':'false');
-  if(on)p.scrollIntoView({block:'nearest'});
+  if(on)p.scrollTop=0;
 }
 function toggleSide(on){$('#side').classList.toggle('open',!!on);$('#scrim').classList.toggle('on',!!on);
 }
@@ -2579,6 +2712,7 @@ function nav(id){
   document.querySelectorAll('[data-nv]').forEach(b=>b.classList.toggle('on',b.dataset.nv===id));
   v.after&&v.after();
   toggleSide(false);toggleMenu(false);
+  window.scrollTo(0,0);if(window.medirTopo)medirTopo();
   document.querySelectorAll('[data-mp]').forEach(b=>b.classList.toggle('on',b.dataset.mp===id));
   $('#view').scrollTop=0;window.scrollTo(0,0);
 }
@@ -7665,6 +7799,13 @@ VIEWS.conta={title:'Minha conta',sub:'Perfil, plano e segurança',html(){
    <div class="card panel" style="margin:0">
      <div class="panel-head"><h3>Configurações</h3></div>
      <div class="panel-body stack">
+       <div class="between" style="gap:12px;flex-wrap:wrap">
+         <span style="font-size:.9rem">Aparência</span>
+         <div class="tema-seg">
+           <button data-t="dark" class="${temaSalvo()==='dark'?'on':''}" onclick="definirTema('dark')">${ico('moon',14)} Escuro</button>
+           <button data-t="light" class="${temaSalvo()==='light'?'on':''}" onclick="definirTema('light')">${ico('sun',14)} Claro</button>
+         </div>
+       </div>
        ${[['Avisar quando cair uma venda',1],['Resumo semanal por e-mail',1],['Novidades da plataforma',0]]
          .map(([t,on],i)=>`<label class="between" style="cursor:pointer">
            <span style="font-size:.9rem">${t}</span>
