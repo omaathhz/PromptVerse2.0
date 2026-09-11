@@ -1031,6 +1031,41 @@ html[data-theme="light"] .top{background:rgba(246,247,250,.95)}
     max-height:calc(100dvh - var(--top-h));overflow-y:auto;-webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;box-shadow:0 18px 40px -18px rgba(0,0,0,.6)}
 }
+
+/* ===== NOTIFICAÇÕES (painel responsivo) ===== */
+.top .top-actions>div{position:static!important}
+.pop{position:absolute!important;top:calc(100% + 8px)!important;right:12px!important;left:12px!important;
+  width:auto!important;max-width:none!important;padding:0!important;z-index:70;
+  background:var(--graphite)!important;border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 24px 60px -20px rgba(0,0,0,.65);overflow:hidden;
+  max-height:calc(100dvh - var(--top-h) - 24px);flex-direction:column}
+.pop.on{display:flex!important}
+@media(min-width:700px){.pop{left:auto!important;width:390px!important;right:max(16px,calc((100% - 1180px) / 2))!important}}
+html[data-theme="light"] .pop{background:#fff!important;box-shadow:0 24px 60px -24px rgba(15,23,42,.35)}
+.np-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 12px;border-bottom:1px solid var(--line)}
+.np-head h4{font-size:.95rem;margin:0;display:flex;align-items:center;gap:8px}
+.np-head .np-count{font-family:var(--mono);font-size:.64rem;padding:2px 8px;border-radius:99px;background:rgba(37,99,235,.18);color:var(--blue-hi)}
+.np-limpar{font-size:.74rem;color:var(--txt-3);padding:6px 10px;border-radius:99px;border:1px solid var(--line)}
+.np-limpar:hover{color:var(--txt);border-color:var(--line-2)}
+.np-list{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px}
+.np-item{display:flex;gap:12px;padding:12px 10px;border-radius:12px;position:relative}
+.np-item+.np-item{border-top:1px solid var(--line);border-radius:0}
+.np-item.novo{background:rgba(37,99,235,.08);border-radius:12px}
+.np-ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;background:rgba(37,99,235,.15);color:var(--blue-hi)}
+.np-ic.sale{background:rgba(34,197,94,.15);color:#22c55e}
+.np-txt{min-width:0;flex:1}
+.np-txt b{display:block;font-size:.88rem;line-height:1.3;color:var(--txt)}
+.np-txt p{margin:2px 0 0;font-size:.8rem;line-height:1.4;color:var(--txt-2);overflow-wrap:anywhere}
+.np-quando{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:6px;font-family:var(--mono);font-size:.64rem;letter-spacing:.02em;color:var(--txt-3)}
+.np-dot{position:absolute;top:16px;right:10px;width:7px;height:7px;border-radius:50%;background:#3B82F6}
+.np-vazio{padding:34px 20px;text-align:center;color:var(--txt-3);font-size:.84rem}
+.np-vazio svg{opacity:.5;margin-bottom:8px}
+.dot-alert{display:none}
+.dot-alert.on{display:block}
+
+/* barra de cima: só o nome do módulo, sem descrição */
+.top .sub,#viewSub{display:none!important}
+.top h2{line-height:1.2}
 </style>
 </head>
 <body>
@@ -1450,8 +1485,8 @@ html[data-theme="light"] .top{background:rgba(246,247,250,.95)}
         <div class="top-actions">
           <button class="icon-btn" id="btnTema" onclick="alternarTema()" aria-label="Alternar modo claro e escuro" title="Modo claro / escuro"><i data-ic="sun"></i></button>
           <div style="position:relative">
-            <button class="icon-btn" onclick="togglePop(event)" aria-label="Notificações"><i data-ic="bell"></i><i class="dot-alert"></i></button>
-            <div class="card pop" id="notifPop"></div>
+            <button class="icon-btn" onclick="togglePop(event)" aria-label="Notificações"><i data-ic="bell"></i><i class="dot-alert" id="notifDot"></i></button>
+            <div class="card pop" id="notifPop" onclick="event.stopPropagation()"></div>
           </div>
           <div class="av" onclick="nav('conta')" style="cursor:pointer" title="Minha conta">MT</div>
         </div>
@@ -1539,7 +1574,7 @@ async function carregarDados(){
     SB.get('licenses?user_id=eq.'+uid+'&status=eq.active&select=*').catch(()=>[]),
     SB.get('sales?user_id=eq.'+uid+'&order=sale_date.desc&limit=200&select=*').catch(()=>[]),
     SB.get('followers?user_id=eq.'+uid+'&order=snapshot_date.desc&limit=60&select=*').catch(()=>[]),
-    SB.get('notifications?user_id=eq.'+uid+'&order=created_at.desc&limit=20&select=*').catch(()=>[]),
+    SB.get('notifications?user_id=eq.'+uid+'&order=created_at.desc&limit=50&select=*').catch(()=>[]),
     SB.get('ai_models?user_id=eq.'+uid+'&order=created_at.desc&select=*').catch(()=>[])
   ]);
   const p=perfil[0]||{};
@@ -1570,9 +1605,8 @@ async function carregarDados(){
            qtd:aprovadas.length};
   }
   if(segs.length)S.seguidores=segs[0].followers_count;
-  if(notifs.length)S.notifs=notifs.map(n=>({
-    ic:n.type==='sale'?'box':n.type==='commission'?'chart':n.type==='follower'?'user':'trophy',
-    t:n.title,s:n.message||''}));
+  S.notifs=mapearNotifs(notifs);
+  renderNotifs();
   if(modelos.length)S.savedModels=modelos.map(m=>({name:m.model_name,img:m.image_url||null,
     cfg:{sexo:m.gender||'Feminino',pele:m.skin_tone||'Clara',rosto:m.face_type||'Oval',
       olhosCor:m.eye_color||'Castanhos',olhosForma:m.eye_shape||'Amendoados',nariz:m.nose_type||'Reto',
@@ -2656,9 +2690,7 @@ const NAV=[
 function mountApp(){
   $('#sideNav').innerHTML=NAV.map(i=>i.g?`<div class="side-lbl">${i.g}</div>`:
     `<button class="nv" data-nv="${i.id}" onclick="nav('${i.id}')">${ico(i.ic)} ${i.l}</button>`).join('');
-  const LISTA=(S.notifs&&S.notifs.length)?S.notifs:NOTIFS;
-  $('#notifPop').innerHTML=`<div style="padding:10px 12px 6px;font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-3)">Notificações</div>`+
-    LISTA.map(n=>`<div class="nt"><div class="nt-ic">${ico(n.ic,16)}</div><div><b>${n.t}</b><span>${n.s}</span></div></div>`).join('');
+  renderNotifs();
   $('#planName').textContent=S.user.plan;
   document.querySelectorAll('.top .av').forEach(a=>a.textContent=S.user.initials);
   paintIcons(document.getElementById('screen-app'));
@@ -2695,6 +2727,7 @@ function toggleMenu(force){
   const p=$('#menuPanel');if(!p)return;
   const on=typeof force==='boolean'?force:!p.classList.contains('on');
   p.classList.toggle('on',on);
+  if(on&&typeof fecharPop==='function')fecharPop();
   const b=document.querySelector('.burger');if(b&&b.setAttribute)b.setAttribute('aria-expanded',on?'true':'false');
   if(on)p.scrollTop=0;
 }
@@ -2702,8 +2735,82 @@ function toggleSide(on){$('#side').classList.toggle('open',!!on);$('#scrim').cla
 }
 function closeNavMob(){const m=$('#navMob');if(m)m.classList.remove('on');const b=$('#navBurger');if(b)b.setAttribute('aria-expanded','false');}
 
-function togglePop(e){e.stopPropagation();$('#notifPop').classList.toggle('on');}
-document.addEventListener('click',()=>$('#notifPop')?.classList.remove('on'));
+/* ===== NOTIFICAÇÕES ===== */
+function mapearNotifs(lista){
+ return (lista||[]).map(n=>({id:n.id,tipo:n.type||'info',t:n.title,s:n.message||'',lida:!!n.read,em:n.created_at}));
+}
+function icNotif(tipo){return tipo==='sale'?'box':tipo==='commission'?'chart':tipo==='follower'?'user':tipo==='goal'?'trophy':'bell';}
+function quandoNotif(iso){
+ if(!iso)return {data:'',rel:''};
+ const d=new Date(iso), agora=new Date();
+ const hoje=d.toDateString()===agora.toDateString();
+ const ontem=new Date(agora-864e5).toDateString()===d.toDateString();
+ const hora=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+ const data=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+ const min=Math.round((agora-d)/6e4);
+ let rel=min<1?'agora':min<60?'há '+min+' min':min<1440?'há '+Math.round(min/60)+' h':'';
+ const dia=hoje?'Hoje':ontem?'Ontem':data;
+ return {data:dia+' às '+hora, rel};
+}
+function renderNotifs(){
+ const pop=$('#notifPop'); if(!pop)return;
+ const lista=(S.notifs&&S.notifs.length)?S.notifs:(SB.demo?NOTIFS.map(n=>({tipo:n.ic==='box'?'sale':'info',t:n.t,s:n.s,lida:true})):[]);
+ const naoLidas=lista.filter(n=>!n.lida).length;
+ const dot=$('#notifDot'); if(dot)dot.classList.toggle('on',naoLidas>0);
+ pop.innerHTML=`<div class="np-head">
+   <h4>${ico('bell',16)} Notificações ${naoLidas?`<span class="np-count">${naoLidas} nova${naoLidas>1?'s':''}</span>`:''}</h4>
+   ${lista.length&&!SB.demo?`<button class="np-limpar" onclick="limparNotifs()">Limpar tudo</button>`:''}
+ </div>
+ <div class="np-list">${lista.length?lista.map(n=>{const q=quandoNotif(n.em);return `
+   <div class="np-item${n.lida?'':' novo'}">
+     <div class="np-ic ${n.tipo==='sale'?'sale':''}">${ico(icNotif(n.tipo),17)}</div>
+     <div class="np-txt"><b>${escAttr(n.t)}</b>${n.s?`<p>${escAttr(n.s)}</p>`:''}
+       ${q.data?`<div class="np-quando"><span>${q.data}</span>${q.rel?`<span>· ${q.rel}</span>`:''}</div>`:''}</div>
+     ${n.lida?'':'<i class="np-dot"></i>'}
+   </div>`;}).join(''):`<div class="np-vazio">${ico('bell',26)}<div>Nenhuma notificação ainda.</div>
+     <div style="margin-top:4px">Quando uma venda for aprovada, ela aparece aqui.</div></div>`}</div>`;
+}
+async function recarregarNotifs(){
+ if(SB.demo||!SB.uid)return;
+ try{
+   const r=await SB.get('notifications?user_id=eq.'+SB.uid+'&order=created_at.desc&limit=50&select=*');
+   S.notifs=mapearNotifs(r); renderNotifs();
+ }catch(e){}
+}
+async function marcarNotifsLidas(){
+ const pend=(S.notifs||[]).filter(n=>!n.lida);
+ if(!pend.length)return;
+ if(!SB.demo&&SB.uid){ try{ await SB.patch('notifications','user_id=eq.'+SB.uid+'&read=eq.false',{read:true}); }catch(e){} }
+ const dot=$('#notifDot'); if(dot)dot.classList.remove('on');
+ /* as novas continuam destacadas enquanto o painel estiver aberto */
+ pend.forEach(n=>n._marcar=true);
+}
+async function limparNotifs(){
+ if(!confirm('Apagar todas as notificações?'))return;
+ try{ await SB.del('notifications','user_id=eq.'+SB.uid); S.notifs=[]; renderNotifs(); toast('Notificações apagadas'); }
+ catch(e){ toast('Não consegui apagar agora'); }
+}
+async function criarNotif(titulo,msg,tipo){
+ if(SB.demo||!SB.uid)return;
+ try{ await SB.insert('notifications',{user_id:SB.uid,title:titulo,message:msg,type:tipo||'info'}); }catch(e){}
+ await recarregarNotifs();
+}
+function togglePop(e){
+ e.stopPropagation();
+ const pop=$('#notifPop'); const abrir=!pop.classList.contains('on');
+ if(abrir){ renderNotifs(); pop.classList.add('on'); marcarNotifsLidas(); if(typeof toggleMenu==='function')toggleMenu(false); }
+ else fecharPop();
+}
+function fecharPop(){
+ const pop=$('#notifPop'); if(!pop||!pop.classList.contains('on'))return;
+ pop.classList.remove('on');
+ (S.notifs||[]).forEach(n=>{if(n._marcar){n.lida=true;delete n._marcar;}});
+ renderNotifs();
+}
+/* busca novas notificações a cada 60s (ex.: venda aprovada vinda da Cakto) */
+setInterval(()=>{ if(!document.hidden&&document.querySelector('#screen-app.on')&&!$('#notifPop')?.classList.contains('on'))recarregarNotifs(); },60000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&document.querySelector('#screen-app.on'))recarregarNotifs(); });
+document.addEventListener('click',()=>fecharPop());
 function nav(id){
   S.view=id;const v=VIEWS[id];if(!v)return;
   $('#viewTitle').textContent=v.title;$('#viewSub').textContent=v.sub;
@@ -6154,6 +6261,8 @@ async function salvarVendaManual(){
    });
    closeModal();
    toast('Venda registrada');
+   const brl=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+   criarNotif('Venda aprovada!',(qtd>1?qtd+' vendas · ':'')+'Comissão: '+brl(com),'sale');
    notificarVendasEmLote(qtd,com);
    await carregarDados();
    nav('dashboard');
