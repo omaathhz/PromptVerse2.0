@@ -1129,6 +1129,15 @@ html[data-theme="light"] .ed-canvas-box{background:#e9ecf3}
 .ed-dica{font-size:.74rem;color:var(--txt-3);line-height:1.5}
 .ed-barra-exp{height:6px;border-radius:99px;background:rgba(148,163,201,.18);overflow:hidden;margin-top:10px}
 .ed-barra-exp i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3B82F6,#2563EB);transition:width .2s}
+
+/* abas Produtos POV / Produtos UGC */
+.prod-tipos{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:5px;margin-bottom:16px;
+  background:var(--glass);border:1px solid var(--line);border-radius:15px}
+.prod-tipos button{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 8px;border:0;
+  border-radius:11px;background:transparent;color:var(--txt-2);font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;transition:.2s}
+.prod-tipos button small{font-family:var(--mono);font-size:.62rem;opacity:.75;font-weight:500}
+.prod-tipos button.on{background:linear-gradient(135deg,#3B82F6,#2563EB);color:#fff;box-shadow:0 6px 20px rgba(37,99,235,.3)}
+@media(max-width:420px){.prod-tipos button{font-size:.76rem;padding:11px 6px}}
 </style>
 </head>
 <body>
@@ -1735,7 +1744,7 @@ const S={
   view:'dashboard', range:'semanal', metric:'seguidores',
   favProducts:new Set(['p2']), favPrompts:new Set(),
   prompts:[], promptHistory:[], savedModels:[], chat:[], busy:false,
-  genImg:null, kpi:null, vendas:null, seguidores:null, notifs:null, licenseKey:null, bonus:[], bonusTotal:29, promptCat:'Prompts para Imagens', toolCat:'Todas', prodCat:'Todos', prodSearch:'', prodPage:1, prodPage:1, ganFmt:'Todos', apisCarregadas:false, apis:{},
+  genImg:null, kpi:null, vendas:null, seguidores:null, notifs:null, licenseKey:null, bonus:[], bonusTotal:29, prodTipo:'pov', promptCat:'Prompts para Imagens', toolCat:'Todas', prodCat:'Todos', prodSearch:'', prodPage:1, prodPage:1, ganFmt:'Todos', apisCarregadas:false, apis:{},
   cgImg:'', cgNome:'', cgProvider:'', cgCopy:'', cgCta:'', cgChat:[], cgBusy:false, copys:null, cgGenImg:'', cgGenNome:'',
   cenTab:'pov', cenSearch:''
 };
@@ -8402,8 +8411,10 @@ async function sendChat(preloaded){
 
 /* ---------- PRODUTOS ---------- */
 VIEWS.produtos={title:'Central de produtos virais',sub:'Copy, ângulos e CTA prontos para gravar',html(){
- const cats=['Todos',...new Set(PRODUCTS.map(p=>p.c))];
- const list=PRODUCTS.filter(p=>(S.prodCat==='Todos'||p.c===S.prodCat)&&(!S.prodSearch||p.n.toLowerCase().includes(S.prodSearch.toLowerCase())));
+ const doTipo=PRODUCTS.filter(p=>prodTipoDe(p)===S.prodTipo);
+ const cats=['Todos',...new Set(doTipo.map(p=>p.c))];
+ if(!cats.includes(S.prodCat))S.prodCat='Todos';
+ const list=prodFiltrar();
  return `<div class="card panel" style="margin:0">
    <div class="panel-head">
      <div style="position:relative;flex:1;max-width:340px">
@@ -8413,14 +8424,34 @@ VIEWS.produtos={title:'Central de produtos virais',sub:'Copy, ângulos e CTA pro
      <span class="badge badge-soft">${S.favProducts.size} salvo(s)</span>
    </div>
    <div class="panel-body">
+     <div class="prod-tipos">
+       ${PROD_TIPOS.map(t=>`<button class="${S.prodTipo===t.id?'on':''}" onclick="prodSetTipo('${t.id}')">
+         ${ico(t.ic,15)} ${t.n} <small>${PRODUCTS.filter(p=>prodTipoDe(p)===t.id).length}</small></button>`).join('')}
+     </div>
      <div class="chiprow" style="margin-bottom:16px">${cats.map(c=>`<button class="chip ${c===S.prodCat?'on':''}" onclick="S.prodCat='${c}';S.prodPage=1;nav('produtos')">${c}</button>`).join('')}</div>
      <div id="prodGrid">${prodGridHTML(list)}</div>
    </div>
  </div>`;
 }};
 const PROD_PAGE=12;
+/* Dois tópicos: Produtos POV e Produtos UGC.
+   Tudo que já existe fica em POV. Para colocar um produto novo em UGC,
+   basta acrescentar tipo:'ugc' no cadastro dele em PRODUCTS. */
+const PROD_TIPOS=[{id:'pov',n:'Produtos POV',ic:'video'},{id:'ugc',n:'Produtos UGC',ic:'user'}];
+function prodTipoDe(p){ return p.tipo==='ugc'?'ugc':'pov'; }
+function prodFiltrar(){
+  return PRODUCTS.filter(p=>prodTipoDe(p)===S.prodTipo
+    &&(S.prodCat==='Todos'||p.c===S.prodCat)
+    &&(!S.prodSearch||p.n.toLowerCase().includes(S.prodSearch.toLowerCase())));
+}
+function prodSetTipo(t){ S.prodTipo=t; S.prodCat='Todos'; S.prodPage=1; nav('produtos'); }
 function prodGridHTML(list){
- if(!list.length)return `<div class="empty"><h4>Nenhum produto com esse nome</h4><p>Tente outra palavra ou volte para "Todos".</p></div>`;
+ if(!list.length){
+   if(S.prodTipo==='ugc'&&!S.prodSearch&&S.prodCat==='Todos')
+     return `<div class="empty"><h4>Produtos UGC em breve</h4>
+       <p>Este espaço já está pronto. Os produtos UGC aparecem aqui assim que forem cadastrados.</p></div>`;
+   return `<div class="empty"><h4>Nenhum produto com esse nome</h4><p>Tente outra palavra ou volte para "Todos".</p></div>`;
+ }
  const vis=list.slice(0,S.prodPage*PROD_PAGE),resto=list.length-vis.length;
  return `<div class="cards">${vis.map(p=>`<div class="card pad">
    <div class="prod-img"><img src="${p.img}" alt="" loading="lazy" decoding="async" width="360" height="360">
@@ -8435,8 +8466,7 @@ function prodGridHTML(list){
    <span style="font-size:.82rem">Os próximos entram aqui na ordem em que você enviar</span></div></div>`}</div>
  ${resto?`<button class="btn btn-ghost btn-block" style="margin-top:16px" onclick="moreProds()">Carregar mais ${resto>PROD_PAGE?PROD_PAGE:resto} de ${resto}</button>`:''}`;
 }
-function renderProds(){const l=PRODUCTS.filter(p=>(S.prodCat==='Todos'||p.c===S.prodCat)&&(!S.prodSearch||p.n.toLowerCase().includes(S.prodSearch.toLowerCase())));
- $('#prodGrid').innerHTML=prodGridHTML(l);paintIcons($('#prodGrid'));}
+function renderProds(){ $('#prodGrid').innerHTML=prodGridHTML(prodFiltrar()); paintIcons($('#prodGrid')); }
 function toggleFav(id){S.favProducts.has(id)?S.favProducts.delete(id):S.favProducts.add(id);renderProds();}
 function moreProds(){S.prodPage++;renderProds();}
 function openProduct(id){
