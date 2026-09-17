@@ -1066,6 +1066,56 @@ html[data-theme="light"] .pop{background:#fff!important;box-shadow:0 24px 60px -
 /* barra de cima: só o nome do módulo, sem descrição */
 .top .sub,#viewSub{display:none!important}
 .top h2{line-height:1.2}
+
+/* ===================== EDITAR VÍDEO ===================== */
+.ed-wrap{display:grid;gap:18px}
+@media(min-width:1000px){.ed-wrap{grid-template-columns:minmax(0,1fr) 380px;align-items:start}}
+.ed-palco{background:var(--graphite);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;position:sticky;top:calc(var(--top-h) + 12px)}
+@media(max-width:999px){.ed-palco{position:static}}
+.ed-canvas-box{position:relative;background:#0a0a0a;display:grid;place-items:center;padding:12px}
+html[data-theme="light"] .ed-canvas-box{background:#e9ecf3}
+#edCanvas{max-width:100%;max-height:62vh;border-radius:10px;touch-action:none;cursor:grab}
+#edCanvas.arrastando{cursor:grabbing}
+.ed-vazio{padding:40px 20px;text-align:center;color:var(--txt-3)}
+.ed-vazio b{display:block;color:var(--txt);margin:10px 0 4px;font-size:.95rem}
+.ed-controles{display:flex;align-items:center;gap:10px;padding:12px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ed-play{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,#3B82F6,#2563EB);color:#fff;border:0;cursor:pointer}
+.ed-tempo{font-family:var(--mono);font-size:.72rem;color:var(--txt-2);flex:none}
+.ed-linha{flex:1;min-width:140px}
+.ed-bloco{background:var(--graphite);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.ed-bloco h4{font-size:.9rem;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.ed-bloco h4 span{font-family:var(--mono);font-size:.62rem;color:var(--txt-3);font-weight:500}
+.ed-campo{margin-bottom:14px}
+.ed-campo:last-child{margin-bottom:0}
+.ed-campo label{display:block;font-size:.76rem;color:var(--txt-2);margin-bottom:6px}
+.ed-opcoes{display:flex;flex-wrap:wrap;gap:8px}
+.ed-opcoes button{padding:9px 14px;border-radius:99px;border:1px solid var(--line);background:transparent;
+  color:var(--txt-2);font-size:.78rem;font-weight:600;cursor:pointer;transition:.18s}
+.ed-opcoes button.on{background:rgba(37,99,235,.18);border-color:var(--line-2);color:var(--blue-hi)}
+.ed-range{width:100%;accent-color:#2563EB}
+.ed-valor{font-family:var(--mono);font-size:.7rem;color:var(--txt-3);float:right}
+.ed-clipe{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+.ed-clipe.on{border-color:var(--line-2);background:rgba(37,99,235,.08)}
+.ed-thumb{width:46px;height:62px;border-radius:8px;object-fit:cover;background:#0d0d0d;flex:none}
+.ed-clipe-info{flex:1;min-width:0}
+.ed-clipe-info b{display:block;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ed-clipe-info small{font-family:var(--mono);font-size:.64rem;color:var(--txt-3)}
+.ed-mini{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:transparent;
+  color:var(--txt-2);display:grid;place-items:center;cursor:pointer;flex:none}
+.ed-mini:hover{color:#f87c9b;border-color:rgba(248,124,155,.4)}
+.ed-corte{display:flex;gap:10px;align-items:center;margin-top:8px}
+.ed-corte input[type=range]{flex:1;accent-color:#2563EB}
+.ed-leg{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.ed-leg.on{border-color:var(--line-2);background:rgba(37,99,235,.08)}
+.ed-leg-top{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.ed-leg-top input{flex:1;min-width:0}
+.ed-cores{display:flex;gap:6px;flex-wrap:wrap}
+.ed-cor{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.ed-cor.on{border-color:#3B82F6;box-shadow:0 0 0 2px rgba(59,130,246,.3)}
+.ed-dica{font-size:.74rem;color:var(--txt-3);line-height:1.5}
+.ed-barra-exp{height:6px;border-radius:99px;background:rgba(148,163,201,.18);overflow:hidden;margin-top:10px}
+.ed-barra-exp i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3B82F6,#2563EB);transition:width .2s}
 </style>
 </head>
 <body>
@@ -1658,7 +1708,8 @@ const ICONS={
  refresh:'<path d="M20 11a8 8 0 10-2 6"/><path d="M20 5v6h-6"/>',
  img:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-4 4-3-3-5 5"/>',
  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
- moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'
+ moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+ pause:'<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>'
 };
 function ico(n,sz=18){return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]||''}</svg>`}
 function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(el=>{
@@ -2681,6 +2732,7 @@ const NAV=[
  {id:'imagens',l:'Gerador de imagens IA',ic:'star'},
  {id:'free',l:'Gerar vídeos de graça',ic:'bolt'},
  {id:'copygen',l:'Gerador de Copy',ic:'edit'},
+ {id:'editor',l:'Editar vídeo',ic:'video'},
  {id:'assistente',l:'Assistente IA',ic:'message'},
  {g:'Evolução'},
  {id:'metodo',l:'Método 2K Seguidores',ic:'grad'},
@@ -2815,6 +2867,7 @@ function nav(id){
   S.view=id;const v=VIEWS[id];if(!v)return;
   $('#viewTitle').textContent=v.title;$('#viewSub').textContent=v.sub;
   if(typeof liberarVideos==='function')liberarVideos($('#view'));
+  if(typeof edPause==='function'&&ED&&ED.tocando)edPause();
   $('#view').innerHTML=v.html();paintIcons($('#view'));
   document.querySelectorAll('[data-nv]').forEach(b=>b.classList.toggle('on',b.dataset.nv===id));
   v.after&&v.after();
@@ -3995,6 +4048,576 @@ function copyGancho(i){
  if(navigator.clipboard&&window.isSecureContext){
    navigator.clipboard.writeText(t).then(()=>toast('Gancho copiado com sucesso.')).catch(()=>copy(t,'Gancho'));
  }else copy(t,'Gancho');
+}
+
+
+/* ===================== EDITAR VÍDEO =====================
+   Editor no próprio navegador: nada é enviado para servidor.
+   Preview desenhado num <canvas>; a exportação grava esse canvas
+   (canvas.captureStream + MediaRecorder) junto com o áudio tratado. */
+const ED={
+  clipes:[],            // {id,nome,url,el,dur,ini,fim,thumb}
+  legendas:[],          // {id,txt,ini,fim,x,y,tam,cor,fundo,sel}
+  ratio:'9:16',
+  borda:'reta',         // reta | arredondada
+  volume:1, mudo:false,
+  audio:null,           // {nome,url,el,vol}
+  vel:1,
+  qualidade:720,
+  sel:0,                // clipe selecionado
+  legSel:null,
+  tocando:false,
+  t:0,                  // tempo global (s) na linha do tempo já cortada
+  raf:null,
+  exportando:false
+};
+const ED_RATIOS={'9:16':[1080,1920],'1:1':[1080,1080],'16:9':[1920,1080],'4:5':[1080,1350]};
+const ED_CORES=['#FFFFFF','#111111','#FACC15','#3B82F6','#22C55E','#F87171'];
+
+function edDur(c){ return Math.max(.1,(c.fim-c.ini)); }
+function edTotal(){ return ED.clipes.reduce((a,c)=>a+edDur(c),0)/ED.vel; }
+function edFmt(s){ s=Math.max(0,s||0); const m=Math.floor(s/60),x=Math.floor(s%60),d=Math.floor((s%1)*10);
+  return m+':'+String(x).padStart(2,'0')+'.'+d; }
+
+VIEWS.editor={title:'Editar vídeo',sub:'Corte, legende e finalize seus vídeos sem sair da plataforma',html(){
+ return `
+ <div class="ed-wrap">
+   <div>
+     <div class="ed-palco">
+       <div class="ed-canvas-box" id="edPalco">
+         <canvas id="edCanvas" width="540" height="960"></canvas>
+         <div class="ed-vazio" id="edVazio">${ico('video',26)}
+           <b>Nenhum vídeo ainda</b>
+           <span>Envie um ou mais vídeos para começar a editar.</span></div>
+       </div>
+       <div class="ed-controles">
+         <button class="ed-play" id="edPlay" onclick="edTogglePlay()">${ico('play',18)}</button>
+         <span class="ed-tempo" id="edTempo">0:00.0 / 0:00.0</span>
+         <input class="ed-linha" type="range" id="edSeek" min="0" max="1000" value="0"
+                oninput="edSeek(this.value)" style="accent-color:#2563EB">
+       </div>
+     </div>
+
+     <div class="ed-bloco" style="margin-top:14px">
+       <h4>${ico('dl',15)} Finalizar e baixar</h4>
+       <p class="ed-dica" style="margin:0 0 12px">O vídeo é montado aqui no seu aparelho, em tempo real.
+         Deixe a tela ligada até terminar.</p>
+       <button class="btn btn-primary btn-block" id="edBtnExport" onclick="edExportar()">${ico('dl',15)} EXPORTAR VÍDEO</button>
+       <div class="ed-barra-exp" id="edBarra" style="display:none"><i id="edBarraFill"></i></div>
+       <p class="ed-dica" id="edStatus" style="margin:8px 0 0"></p>
+     </div>
+   </div>
+
+   <div>
+     <div class="ed-bloco">
+       <h4>${ico('video',15)} Vídeos <span id="edQtd"></span></h4>
+       <div id="edListaClipes"></div>
+       <input type="file" id="edFile" accept="video/*" multiple style="display:none" onchange="edAddVideos(this.files)">
+       <button class="btn btn-block" onclick="$('#edFile').click()">${ico('plus',14)} Adicionar vídeo</button>
+       <p class="ed-dica" style="margin:10px 0 0">Vários vídeos entram um depois do outro, na ordem da lista.</p>
+     </div>
+
+     <div class="ed-bloco">
+       <h4>${ico('search',15)} Corte</h4>
+       <div id="edCorte"><p class="ed-dica">Envie um vídeo para cortar.</p></div>
+     </div>
+
+     <div class="ed-bloco">
+       <h4>${ico('img',15)} Formato</h4>
+       <div class="ed-campo">
+         <label>Proporção</label>
+         <div class="ed-opcoes" id="edRatio">
+           ${Object.keys(ED_RATIOS).map(r=>`<button onclick="edSetRatio('${r}')" class="${ED.ratio===r?'on':''}">${r}</button>`).join('')}
+         </div>
+       </div>
+       <div class="ed-campo">
+         <label>Bordas</label>
+         <div class="ed-opcoes" id="edBorda">
+           <button onclick="edSetBorda('reta')" class="${ED.borda==='reta'?'on':''}">Quadrada</button>
+           <button onclick="edSetBorda('arredondada')" class="${ED.borda==='arredondada'?'on':''}">Arredondada</button>
+         </div>
+       </div>
+     </div>
+
+     <div class="ed-bloco">
+       <h4>${ico('message',15)} Legendas</h4>
+       <div id="edLegendas"></div>
+       <button class="btn btn-block" onclick="edAddLegenda()">${ico('plus',14)} Adicionar legenda</button>
+       <p class="ed-dica" style="margin:10px 0 0">Arraste a legenda direto no vídeo para escolher a posição.</p>
+     </div>
+
+     <div class="ed-bloco">
+       <h4>${ico('bolt',15)} Áudio e velocidade</h4>
+       <div class="ed-campo">
+         <label>Volume do vídeo <span class="ed-valor" id="edVolVal">${Math.round(ED.volume*100)}%</span></label>
+         <input class="ed-range" type="range" min="0" max="100" value="${ED.volume*100}" oninput="edSetVolume(this.value)">
+         <div class="ed-opcoes" style="margin-top:8px">
+           <button onclick="edMudo()" id="edBtnMudo" class="${ED.mudo?'on':''}">Sem áudio</button>
+         </div>
+       </div>
+       <div class="ed-campo">
+         <label>Áudio de fundo</label>
+         <div id="edAudioInfo"></div>
+         <input type="file" id="edAudioFile" accept="audio/*" style="display:none" onchange="edAddAudio(this.files[0])">
+         <button class="btn btn-block" onclick="$('#edAudioFile').click()">${ico('plus',14)} Enviar áudio</button>
+       </div>
+       <div class="ed-campo">
+         <label>Velocidade <span class="ed-valor" id="edVelVal">${ED.vel}x</span></label>
+         <div class="ed-opcoes" id="edVel">
+           ${[0.5,0.75,1,1.25,1.5,2].map(v=>`<button onclick="edSetVel(${v})" class="${ED.vel===v?'on':''}">${v}x</button>`).join('')}
+         </div>
+       </div>
+     </div>
+
+     <div class="ed-bloco">
+       <h4>${ico('star',15)} Qualidade</h4>
+       <div class="ed-opcoes" id="edQual">
+         ${[[480,'Leve'],[720,'HD'],[1080,'Full HD']].map(q=>`<button onclick="edSetQual(${q[0]})" class="${ED.qualidade===q[0]?'on':''}">${q[1]} ${q[0]}p</button>`).join('')}
+       </div>
+       <p class="ed-dica" style="margin:10px 0 0">Full HD gera arquivo maior e demora mais em celulares antigos.</p>
+     </div>
+   </div>
+ </div>`;
+},after(){ edIniciar(); }};
+
+function edIniciar(){
+  const cv=$('#edCanvas'); if(!cv)return;
+  edAjustarCanvas();
+  edPintarClipes(); edPintarCorte(); edPintarLegendas(); edPintarAudio(); edAtualizarTempo();
+  cv.addEventListener('pointerdown',edArrastaIni);
+  cv.addEventListener('pointermove',edArrastaMove);
+  cv.addEventListener('pointerup',edArrastaFim);
+  cv.addEventListener('pointercancel',edArrastaFim);
+  edDesenhar();
+}
+function edAjustarCanvas(){
+  const cv=$('#edCanvas'); if(!cv)return;
+  const [w,h]=ED_RATIOS[ED.ratio];
+  const escala=540/Math.max(w,h);
+  cv.width=Math.round(w*escala*(w>=h?1:1)); cv.height=Math.round(h*escala);
+  if(w>h){cv.width=540;cv.height=Math.round(540*h/w);}
+  else{cv.height=Math.min(960,Math.round(540*h/w));cv.width=Math.round(cv.height*w/h);}
+  $('#edVazio').style.display=ED.clipes.length?'none':'block';
+  cv.style.display=ED.clipes.length?'block':'none';
+}
+
+/* ---------- vídeos ---------- */
+async function edAddVideos(files){
+  const lista=[...(files||[])]; if(!lista.length)return;
+  for(const f of lista){
+    if(!f.type.startsWith('video/')){ toast('Arquivo ignorado: não é vídeo'); continue; }
+    try{ await edCarregarClipe(f); }catch(e){ toast('Não consegui abrir '+f.name); }
+  }
+  $('#edFile').value='';
+  edAjustarCanvas(); edPintarClipes(); edPintarCorte(); edAtualizarTempo(); edDesenhar();
+}
+function edCarregarClipe(file){
+  return new Promise((ok,err)=>{
+    const url=URL.createObjectURL(file);
+    const v=document.createElement('video');
+    v.src=url; v.preload='auto'; v.playsInline=true; v.muted=true;
+    v.crossOrigin='anonymous';
+    v.onloadedmetadata=()=>{
+      const c={id:'c'+Date.now()+Math.random().toString(36).slice(2,6),
+        nome:file.name,url,el:v,dur:v.duration||0,ini:0,fim:v.duration||0,thumb:''};
+      ED.clipes.push(c);
+      v.currentTime=Math.min(.1,c.dur/2);
+      v.onseeked=()=>{ try{
+          const cv=document.createElement('canvas'); cv.width=92;cv.height=124;
+          cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
+          c.thumb=cv.toDataURL('image/jpeg',.7); edPintarClipes();
+        }catch(e){} v.onseeked=null; v.currentTime=c.ini; };
+      ok(c);
+    };
+    v.onerror=()=>err(new Error('erro'));
+  });
+}
+function edPintarClipes(){
+  const box=$('#edListaClipes'); if(!box)return;
+  $('#edQtd').textContent=ED.clipes.length?ED.clipes.length+' na fila':'';
+  box.innerHTML=ED.clipes.map((c,i)=>`
+    <div class="ed-clipe ${i===ED.sel?'on':''}" onclick="edSelClipe(${i})">
+      ${c.thumb?`<img class="ed-thumb" src="${c.thumb}" alt="">`:`<div class="ed-thumb"></div>`}
+      <div class="ed-clipe-info"><b>${escAttr(c.nome)}</b><small>${edFmt(edDur(c))} de ${edFmt(c.dur)}</small></div>
+      <button class="ed-mini" onclick="event.stopPropagation();edMover(${i},-1)" title="Subir">${ico('up',13)}</button>
+      <button class="ed-mini" onclick="event.stopPropagation();edMover(${i},1)" title="Descer">${ico('down',13)}</button>
+      <button class="ed-mini" onclick="event.stopPropagation();edRemover(${i})" title="Remover">${ico('x',13)}</button>
+    </div>`).join('')||'<p class="ed-dica">Nenhum vídeo na fila.</p>';
+  paintIcons(box);
+}
+function edSelClipe(i){ ED.sel=i; edPintarClipes(); edPintarCorte(); }
+function edMover(i,d){
+  const j=i+d; if(j<0||j>=ED.clipes.length)return;
+  const [c]=ED.clipes.splice(i,1); ED.clipes.splice(j,0,c);
+  ED.sel=j; edPintarClipes(); edAtualizarTempo();
+}
+function edRemover(i){
+  const c=ED.clipes[i]; if(!c)return;
+  try{ c.el.pause(); URL.revokeObjectURL(c.url); }catch(e){}
+  ED.clipes.splice(i,1); ED.sel=Math.max(0,Math.min(ED.sel,ED.clipes.length-1));
+  ED.t=0; edAjustarCanvas(); edPintarClipes(); edPintarCorte(); edAtualizarTempo(); edDesenhar();
+}
+/* ---------- corte ---------- */
+function edPintarCorte(){
+  const box=$('#edCorte'); if(!box)return;
+  const c=ED.clipes[ED.sel];
+  if(!c){ box.innerHTML='<p class="ed-dica">Envie um vídeo para cortar.</p>'; return; }
+  box.innerHTML=`
+    <p class="ed-dica" style="margin:0 0 10px">${escAttr(c.nome)}</p>
+    <div class="ed-campo" style="margin-bottom:10px">
+      <label>Início <span class="ed-valor" id="edIniVal">${edFmt(c.ini)}</span></label>
+      <input class="ed-range" type="range" min="0" max="${c.dur.toFixed(2)}" step="0.05" value="${c.ini}"
+             oninput="edCortar('ini',this.value)">
+    </div>
+    <div class="ed-campo" style="margin-bottom:10px">
+      <label>Fim <span class="ed-valor" id="edFimVal">${edFmt(c.fim)}</span></label>
+      <input class="ed-range" type="range" min="0" max="${c.dur.toFixed(2)}" step="0.05" value="${c.fim}"
+             oninput="edCortar('fim',this.value)">
+    </div>
+    <p class="ed-dica">Trecho usado: <b>${edFmt(edDur(c))}</b></p>`;
+}
+function edCortar(qual,val){
+  const c=ED.clipes[ED.sel]; if(!c)return; val=+val;
+  if(qual==='ini') c.ini=Math.min(val,c.fim-.2);
+  else c.fim=Math.max(val,c.ini+.2);
+  $('#edIniVal').textContent=edFmt(c.ini); $('#edFimVal').textContent=edFmt(c.fim);
+  ED.t=0; edPintarClipes(); edPintarCorte(); edAtualizarTempo(); edDesenhar();
+}
+/* ---------- formato ---------- */
+function edSetRatio(r){
+  ED.ratio=r;
+  document.querySelectorAll('#edRatio button').forEach(b=>b.classList.toggle('on',b.textContent.trim()===r));
+  edAjustarCanvas(); edDesenhar();
+}
+function edSetBorda(b){
+  ED.borda=b;
+  document.querySelectorAll('#edBorda button').forEach(x=>x.classList.toggle('on',
+    (b==='reta'&&x.textContent.includes('Quadrada'))||(b==='arredondada'&&x.textContent.includes('Arredondada'))));
+  edDesenhar();
+}
+/* ---------- legendas ---------- */
+function edAddLegenda(){
+  const total=edTotal()||5;
+  ED.legendas.push({id:'l'+Date.now(),txt:'Escreva sua legenda',ini:0,fim:+total.toFixed(1),
+    x:.5,y:.82,tam:7,cor:'#FFFFFF',fundo:true});
+  ED.legSel=ED.legendas.length-1; edPintarLegendas(); edDesenhar();
+}
+function edPintarLegendas(){
+  const box=$('#edLegendas'); if(!box)return;
+  const total=Math.max(edTotal(),.5);
+  box.innerHTML=ED.legendas.map((l,i)=>`
+    <div class="ed-leg ${i===ED.legSel?'on':''}" onclick="ED.legSel=${i};edPintarLegendas();edDesenhar()">
+      <div class="ed-leg-top">
+        <input class="input" value="${escAttr(l.txt)}" oninput="edLegTxt(${i},this.value)" placeholder="Texto da legenda">
+        <button class="ed-mini" onclick="event.stopPropagation();edLegRemover(${i})">${ico('x',13)}</button>
+      </div>
+      <div class="ed-campo" style="margin-bottom:8px">
+        <label>Aparece de <span class="ed-valor">${edFmt(l.ini)} a ${edFmt(l.fim)}</span></label>
+        <div class="ed-corte">
+          <input type="range" min="0" max="${total.toFixed(1)}" step="0.1" value="${l.ini}" oninput="edLegTempo(${i},'ini',this.value)">
+          <input type="range" min="0" max="${total.toFixed(1)}" step="0.1" value="${l.fim}" oninput="edLegTempo(${i},'fim',this.value)">
+        </div>
+      </div>
+      <div class="ed-campo" style="margin-bottom:8px">
+        <label>Tamanho <span class="ed-valor">${l.tam}</span></label>
+        <input class="ed-range" type="range" min="3" max="14" step="0.5" value="${l.tam}" oninput="edLegTam(${i},this.value)">
+      </div>
+      <div class="ed-campo" style="margin-bottom:0">
+        <label>Cor e fundo</label>
+        <div class="ed-cores">
+          ${ED_CORES.map(c=>`<button class="ed-cor ${l.cor===c?'on':''}" style="background:${c}" onclick="event.stopPropagation();edLegCor(${i},'${c}')"></button>`).join('')}
+          <button class="ed-mini" style="margin-left:6px;width:auto;padding:0 10px;font-size:.72rem"
+            onclick="event.stopPropagation();edLegFundo(${i})">${l.fundo?'Com fundo':'Sem fundo'}</button>
+        </div>
+      </div>
+    </div>`).join('')||'<p class="ed-dica">Nenhuma legenda ainda.</p>';
+  paintIcons(box);
+}
+function edLegTxt(i,v){ ED.legendas[i].txt=v; edDesenhar(); }
+function edLegTempo(i,k,v){ const l=ED.legendas[i]; v=+v;
+  if(k==='ini') l.ini=Math.min(v,l.fim-.2); else l.fim=Math.max(v,l.ini+.2);
+  edPintarLegendas(); edDesenhar(); }
+function edLegTam(i,v){ ED.legendas[i].tam=+v; edDesenhar(); }
+function edLegCor(i,c){ ED.legendas[i].cor=c; ED.legSel=i; edPintarLegendas(); edDesenhar(); }
+function edLegFundo(i){ ED.legendas[i].fundo=!ED.legendas[i].fundo; edPintarLegendas(); edDesenhar(); }
+function edLegRemover(i){ ED.legendas.splice(i,1); ED.legSel=null; edPintarLegendas(); edDesenhar(); }
+
+/* arrastar a legenda no canvas */
+let edArr=null;
+function edPonto(e){ const cv=$('#edCanvas'),r=cv.getBoundingClientRect();
+  return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}; }
+function edArrastaIni(e){
+  if(!ED.legendas.length)return;
+  const p=edPonto(e); let alvo=null,dist=9;
+  ED.legendas.forEach((l,i)=>{ const d=Math.hypot(l.x-p.x,l.y-p.y); if(d<dist&&d<.2){dist=d;alvo=i;} });
+  if(alvo===null)return;
+  ED.legSel=alvo; edArr={i:alvo}; $('#edCanvas').classList.add('arrastando');
+  $('#edCanvas').setPointerCapture(e.pointerId); edPintarLegendas(); e.preventDefault();
+}
+function edArrastaMove(e){
+  if(!edArr)return; const p=edPonto(e); const l=ED.legendas[edArr.i];
+  l.x=Math.max(.05,Math.min(.95,p.x)); l.y=Math.max(.06,Math.min(.96,p.y)); edDesenhar(); e.preventDefault();
+}
+function edArrastaFim(){ if(!edArr)return; edArr=null; $('#edCanvas').classList.remove('arrastando'); }
+
+/* ---------- áudio, velocidade, qualidade ---------- */
+function edSetVolume(v){ ED.volume=+v/100; $('#edVolVal').textContent=Math.round(ED.volume*100)+'%';
+  if(ED.mudo&&ED.volume>0){ED.mudo=false;$('#edBtnMudo').classList.remove('on');}
+  edAplicarVolume(); }
+function edMudo(){ ED.mudo=!ED.mudo; $('#edBtnMudo').classList.toggle('on',ED.mudo); edAplicarVolume(); }
+function edAplicarVolume(){
+  const v=ED.mudo?0:ED.volume;
+  ED.clipes.forEach(c=>{ c.el.muted=(v===0); c.el.volume=v; });
+  if(ED.ganhoVideo) ED.ganhoVideo.gain.value=v;
+}
+function edAddAudio(f){
+  if(!f)return;
+  if(ED.audio){ try{URL.revokeObjectURL(ED.audio.url);}catch(e){} }
+  const url=URL.createObjectURL(f), a=new Audio(url); a.loop=true; a.volume=.8;
+  ED.audio={nome:f.name,url,el:a,vol:.8};
+  $('#edAudioFile').value=''; edPintarAudio();
+}
+function edPintarAudio(){
+  const box=$('#edAudioInfo'); if(!box)return;
+  if(!ED.audio){ box.innerHTML='<p class="ed-dica" style="margin:0 0 8px">Nenhum áudio adicionado.</p>'; return; }
+  box.innerHTML=`<div class="ed-clipe" style="margin-bottom:10px">
+      <div class="ed-clipe-info"><b>${escAttr(ED.audio.nome)}</b><small>volume ${Math.round(ED.audio.vol*100)}%</small></div>
+      <button class="ed-mini" onclick="edRemoverAudio()">${ico('x',13)}</button>
+    </div>
+    <input class="ed-range" type="range" min="0" max="100" value="${ED.audio.vol*100}" oninput="edAudioVol(this.value)">`;
+  paintIcons(box);
+}
+function edAudioVol(v){ ED.audio.vol=+v/100; if(ED.audio.el)ED.audio.el.volume=ED.audio.vol;
+  if(ED.ganhoAudio)ED.ganhoAudio.gain.value=ED.audio.vol; }
+function edRemoverAudio(){ try{ED.audio.el.pause();URL.revokeObjectURL(ED.audio.url);}catch(e){}
+  ED.audio=null; edPintarAudio(); }
+function edSetVel(v){ ED.vel=v;
+  document.querySelectorAll('#edVel button').forEach(b=>b.classList.toggle('on',b.textContent===v+'x'));
+  $('#edVelVal').textContent=v+'x'; ED.clipes.forEach(c=>c.el.playbackRate=v);
+  ED.t=0; edAtualizarTempo(); edPintarLegendas(); }
+function edSetQual(q){ ED.qualidade=q;
+  document.querySelectorAll('#edQual button').forEach(b=>b.classList.toggle('on',b.textContent.includes(q+'p'))); }
+
+/* ---------- linha do tempo / preview ---------- */
+function edLocalizar(t){                       /* t = tempo global já com velocidade */
+  let acc=0, real=t*ED.vel;
+  for(let i=0;i<ED.clipes.length;i++){
+    const d=edDur(ED.clipes[i]);
+    if(real<acc+d||i===ED.clipes.length-1) return {i,dentro:Math.min(d,Math.max(0,real-acc))};
+    acc+=d;
+  }
+  return null;
+}
+function edTogglePlay(){ ED.tocando?edPause():edPlay(); }
+function edPlay(){
+  if(!ED.clipes.length){ toast('Envie um vídeo primeiro'); return; }
+  ED.tocando=true; $('#edPlay').innerHTML=ico('pause',18);
+  if(ED.audio&&ED.audio.el){ ED.audio.el.currentTime=Math.min(ED.t,ED.audio.el.duration||ED.t); ED.audio.el.play().catch(()=>{}); }
+  ED.ultimo=performance.now(); edLoop();
+}
+function edPause(){
+  ED.tocando=false; $('#edPlay').innerHTML=ico('play',18);
+  ED.clipes.forEach(c=>{try{c.el.pause();}catch(e){}});
+  if(ED.audio&&ED.audio.el)ED.audio.el.pause();
+  cancelAnimationFrame(ED.raf);
+}
+function edSeek(v){
+  const total=edTotal(); ED.t=total*(+v/1000);
+  const loc=edLocalizar(ED.t);
+  if(loc){ const c=ED.clipes[loc.i]; try{ c.el.currentTime=c.ini+loc.dentro; }catch(e){} }
+  edAtualizarTempo(); edDesenhar();
+}
+function edLoop(){
+  if(!ED.tocando)return;
+  const agora=performance.now(), dt=(agora-(ED.ultimo||agora))/1000; ED.ultimo=agora;
+  ED.t+=dt;
+  const total=edTotal();
+  if(ED.t>=total){ ED.t=0; if(!ED.exportando){ edPause(); edDesenhar(); return; } }
+  const loc=edLocalizar(ED.t);
+  if(loc){
+    const c=ED.clipes[loc.i], alvo=c.ini+loc.dentro;
+    ED.clipes.forEach((o,i)=>{ if(i!==loc.i&&!o.el.paused)o.el.pause(); });
+    c.el.playbackRate=ED.vel;
+    if(c.el.paused){ try{ c.el.currentTime=alvo; }catch(e){} c.el.play().catch(()=>{}); }
+    else if(Math.abs((c.el.currentTime-alvo))>.4){ try{ c.el.currentTime=alvo; }catch(e){} }
+  }
+  edDesenhar(); edAtualizarTempo();
+  ED.raf=requestAnimationFrame(edLoop);
+}
+function edAtualizarTempo(){
+  const t=$('#edTempo'); if(!t)return;
+  const total=edTotal(); t.textContent=edFmt(ED.t)+' / '+edFmt(total);
+  const s=$('#edSeek'); if(s&&!edArr) s.value=total?Math.round(ED.t/total*1000):0;
+}
+function edCaminhoArredondado(ctx,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(r,0); ctx.lineTo(w-r,0); ctx.quadraticCurveTo(w,0,w,r);
+  ctx.lineTo(w,h-r); ctx.quadraticCurveTo(w,h,w-r,h);
+  ctx.lineTo(r,h); ctx.quadraticCurveTo(0,h,0,h-r);
+  ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0); ctx.closePath();
+}
+function edDesenharEm(ctx,W,H,tempo){
+  ctx.save();
+  ctx.clearRect(0,0,W,H);
+  if(ED.borda==='arredondada'){ edCaminhoArredondado(ctx,W,H,Math.min(W,H)*.06); ctx.clip(); }
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  const loc=edLocalizar(tempo);
+  if(loc){
+    const v=ED.clipes[loc.i].el;
+    if(v.videoWidth){
+      const escala=Math.max(W/v.videoWidth,H/v.videoHeight);
+      const w=v.videoWidth*escala,h=v.videoHeight*escala;
+      ctx.drawImage(v,(W-w)/2,(H-h)/2,w,h);
+    }
+  }
+  ED.legendas.forEach(l=>{
+    if(tempo<l.ini||tempo>l.fim||!l.txt)return;
+    const tam=Math.round(H*l.tam/100);
+    ctx.font='800 '+tam+'px Sora, Inter, sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const maxW=W*.88, linhas=[]; let linha='';
+    l.txt.split(/\s+/).forEach(p=>{
+      const teste=linha?linha+' '+p:p;
+      if(ctx.measureText(teste).width>maxW&&linha){ linhas.push(linha); linha=p; } else linha=teste;
+    });
+    if(linha)linhas.push(linha);
+    const alt=tam*1.25, y0=H*l.y-(linhas.length-1)*alt/2;
+    linhas.forEach((ln,k)=>{
+      const x=W*l.x, y=y0+k*alt, m=ctx.measureText(ln).width;
+      if(l.fundo){
+        ctx.fillStyle='rgba(0,0,0,.55)';
+        const px=tam*.42, py=tam*.28, r=tam*.32;
+        const bx=x-m/2-px, by=y-alt/2-py+tam*.08, bw=m+px*2, bh=alt+py;
+        ctx.beginPath();
+        if(ctx.roundRect)ctx.roundRect(bx,by,bw,bh,r); else ctx.rect(bx,by,bw,bh);
+        ctx.fill();
+      }else{
+        ctx.lineWidth=Math.max(2,tam*.13); ctx.strokeStyle='rgba(0,0,0,.75)';
+        ctx.lineJoin='round'; ctx.strokeText(ln,x,y);
+      }
+      ctx.fillStyle=l.cor; ctx.fillText(ln,x,y);
+    });
+  });
+  ctx.restore();
+}
+function edDesenhar(){
+  const cv=$('#edCanvas'); if(!cv)return;
+  edDesenharEm(cv.getContext('2d'),cv.width,cv.height,ED.t);
+}
+
+/* ---------- exportar ---------- */
+function edMime(){
+  /* mp4 só quando o navegador aceita H.264 (iPhone e Chrome novo) — é o que a galeria do
+     celular abre. Sem isso, webm, que o computador e o Android reproduzem normalmente. */
+  const tipos=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=h264,aac','video/mp4;codecs=avc1',
+               'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'];
+  for(const t of tipos){ if(window.MediaRecorder&&MediaRecorder.isTypeSupported(t))return t; }
+  return '';
+}
+/* extensão de acordo com o que o gravador realmente produziu */
+function edExt(tipo){ return String(tipo||'').includes('webm')?'webm':'mp4'; }
+async function edExportar(){
+  if(ED.exportando)return;
+  if(!ED.clipes.length){ toast('Envie um vídeo primeiro'); return; }
+  if(!window.MediaRecorder){ toast('Seu navegador não permite exportar vídeo'); return; }
+  const mime=edMime();
+  if(!mime){ toast('Seu navegador não permite exportar vídeo'); return; }
+
+  const btn=$('#edBtnExport'), barra=$('#edBarra'), fill=$('#edBarraFill'), status=$('#edStatus');
+  ED.exportando=true; btn.disabled=true; btn.innerHTML=ico('refresh',15)+' GRAVANDO...'; paintIcons(btn);
+  barra.style.display='block'; status.textContent='Montando o vídeo em tempo real. Não feche esta tela.';
+
+  edPause(); ED.t=0;
+  const [rw,rh]=ED_RATIOS[ED.ratio];
+  const H=ED.qualidade, W=Math.round(H*rw/rh/2)*2;
+  const off=document.createElement('canvas'); off.width=W; off.height=H;
+  const ctx=off.getContext('2d');
+
+  let stream=off.captureStream(30), ctxAudio=null;
+  try{
+    ctxAudio=new (window.AudioContext||window.webkitAudioContext)();
+    const dest=ctxAudio.createMediaStreamDestination();
+    ED.ganhoVideo=ctxAudio.createGain(); ED.ganhoVideo.gain.value=ED.mudo?0:ED.volume;
+    ED.ganhoVideo.connect(dest);
+    ED.clipes.forEach(c=>{
+      try{
+        if(!c._fonte){ c._fonte=ctxAudio.createMediaElementSource(c.el); }
+        c._fonte.connect(ED.ganhoVideo);
+      }catch(e){}
+      c.el.muted=false; c.el.volume=1;
+    });
+    if(ED.audio&&ED.audio.el){
+      ED.ganhoAudio=ctxAudio.createGain(); ED.ganhoAudio.gain.value=ED.audio.vol;
+      ED.ganhoAudio.connect(dest);
+      try{ if(!ED.audio._fonte)ED.audio._fonte=ctxAudio.createMediaElementSource(ED.audio.el);
+           ED.audio._fonte.connect(ED.ganhoAudio); }catch(e){}
+    }
+    dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+    await ctxAudio.resume().catch(()=>{});
+  }catch(e){ /* sem áudio: exporta só o vídeo */ }
+
+  const bits={480:2500000,720:5000000,1080:9000000}[ED.qualidade]||5000000;
+  let rec;
+  try{ rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:bits}); }
+  catch(e){ rec=new MediaRecorder(stream); }
+  const partes=[];
+  rec.ondataavailable=e=>{ if(e.data&&e.data.size)partes.push(e.data); };
+
+  const total=edTotal();
+  const pronto=new Promise(ok=>{ rec.onstop=ok; });
+  rec.start(250);
+
+  ED.tocando=true; ED.ultimo=performance.now();
+  if(ED.audio&&ED.audio.el){ ED.audio.el.currentTime=0; ED.audio.el.play().catch(()=>{}); }
+
+  await new Promise(fim=>{
+    function passo(){
+      if(!ED.exportando){ fim(); return; }
+      const agora=performance.now(), dt=(agora-ED.ultimo)/1000; ED.ultimo=agora;
+      ED.t+=dt;
+      if(ED.t>=total){ ED.t=total; edDesenharEm(ctx,W,H,Math.max(0,total-.01)); fim(); return; }
+      const loc=edLocalizar(ED.t);
+      if(loc){
+        const c=ED.clipes[loc.i], alvo=c.ini+loc.dentro;
+        ED.clipes.forEach((o,i)=>{ if(i!==loc.i&&!o.el.paused)o.el.pause(); });
+        c.el.playbackRate=ED.vel;
+        if(c.el.paused){ try{ c.el.currentTime=alvo; }catch(e){} c.el.play().catch(()=>{}); }
+      }
+      edDesenharEm(ctx,W,H,ED.t);
+      edDesenhar(); edAtualizarTempo();
+      fill.style.width=Math.min(100,ED.t/total*100)+'%';
+      requestAnimationFrame(passo);
+    }
+    requestAnimationFrame(passo);
+  });
+
+  try{ rec.stop(); }catch(e){}
+  await pronto;
+  ED.tocando=false;
+  ED.clipes.forEach(c=>{try{c.el.pause();}catch(e){}});
+  if(ED.audio&&ED.audio.el)ED.audio.el.pause();
+  try{ if(ctxAudio)await ctxAudio.close(); }catch(e){}
+  ED.ganhoVideo=null; ED.ganhoAudio=null;
+  ED.clipes.forEach(c=>{ c._fonte=null; c.el.muted=(ED.mudo||ED.volume===0); c.el.volume=ED.mudo?0:ED.volume; });
+  if(ED.audio)ED.audio._fonte=null;
+
+  const tipoReal=(partes[0]&&partes[0].type)||rec.mimeType||mime;
+  const ext=edExt(tipoReal);
+  const blob=new Blob(partes,{type:tipoReal.split(';')[0]});
+  const url=URL.createObjectURL(blob);
+  const nome='promptverse-editado-'+Date.now()+'.'+ext;
+  const a=document.createElement('a'); a.href=url; a.download=nome; a.rel='noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+
+  const mb=(blob.size/1048576).toFixed(1);
+  status.innerHTML=`Pronto! <b>${nome}</b> (${mb} MB).
+    Se o download não abrir sozinho, <a href="${url}" download="${nome}" style="color:var(--blue-hi)">toque aqui</a>.
+    No iPhone, segure o vídeo e escolha "Salvar em Vídeos".`;
+  fill.style.width='100%';
+  btn.disabled=false; btn.innerHTML=ico('dl',15)+' EXPORTAR VÍDEO'; paintIcons(btn);
+  ED.exportando=false; ED.t=0; edAtualizarTempo(); edDesenhar();
+  toast('Vídeo exportado');
 }
 
 /* ---------- GERAR VIDEOS DE GRACA ---------- */
