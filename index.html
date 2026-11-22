@@ -3931,7 +3931,7 @@ function openMore(){
     <div style="padding:0 6px 10px">${focusSwitch()}</div>
     ${(()=>{const g=growthOrder();return g.main.map(x=>it(x[0],x[1],x[2])).join('')+it('mensalidades','refresh','Recorrências')+(g.extra.length?`<div class="more-lbl">Também incluso</div>`+g.extra.map(x=>it(x[0],x[1],x[2])).join(''):'')})()}<div class="more-lbl">Geral</div>${iaRow()}${it('projetos','folder','Projetos')}${it('clientes','users','Clientes')}${it('financeiro','wallet','Financeiro')}${it('configuracoes','settings','Configurações')}
     <button class="row" data-act="theme">${icon(isDark()?'sun':'moon',20)}<div class="r-main"><b>${isDark()?'Modo claro':'Modo escuro'}</b></div></button>
-    ${AUTH_ENABLED?`<button class="row" data-act="logout" style="color:var(--danger)">${icon('logout',20)}<div class="r-main"><b>Sair da conta</b></div></button>`:''}<p class="muted" style="text-align:center;font-size:11px;margin:10px 0 2px">Vendly · versão 22/11 – 21</p></div>`,{size:'sm'});
+    ${AUTH_ENABLED?`<button class="row" data-act="logout" style="color:var(--danger)">${icon('logout',20)}<div class="r-main"><b>Sair da conta</b></div></button>`:''}<p class="muted" style="text-align:center;font-size:11px;margin:10px 0 2px">Vendly · versão 22/11 – 22</p></div>`,{size:'sm'});
 }
 
 /* ---------- Período personalizado ---------- */
@@ -7087,7 +7087,7 @@ function siteCard(s){
   return `<article class="card hs-card">
     ${siteThumb(s)}
     <div class="hs-body">
-      <div class="hs-top"><div class="hs-name"><b>${esc(s.name||'Site sem nome')}</b><span>${esc(nicheById(s.niche).label)}${s.brief&&s.brief.kind==='bio'?' · Página de links':''}</span></div>${pill}</div>
+      <div class="hs-top"><div class="hs-name"><b>${esc(s.name||'Site sem nome')}</b><span>${s.mode==='import'?'Site importado':esc(nicheById(s.niche).label)}${s.brief&&s.brief.kind==='bio'?' · Página de links':''}</span></div>${pill}</div>
       ${p?`${p.short_host?`<div class="hs-link hs-short"><a href="https://${esc(p.short_host)}" target="_blank" rel="noopener">${icon('link',14)}<span><b>${esc(p.short_host.replace(/\.vercel\.app$/,''))}</b>.vercel.app</span></a><button class="icon-btn sm" data-act="hs-copy" data-id="${s.id}" aria-label="Copiar link curto">${icon('copy',15)}</button></div>`:''}
       <div class="hs-link ${p.short_host?'alt':''}"><a href="${siteURL(p.slug)}" target="_blank" rel="noopener">${icon('globe',14)}<span>${SITES_HOST}/<b>${esc(p.slug)}</b></span></a>${p.short_host?'':`<button class="icon-btn sm" data-act="hs-copy" data-id="${s.id}" aria-label="Copiar link">${icon('copy',15)}</button>`}</div>
       ${p.short_host?'':`<button class="btn-text btn hs-short-btn" data-act="hs-short" data-id="${s.id}">${icon('sparkle',14)}Criar link curto (${esc(slugify(s.name||p.slug).replace(/-/g,'').slice(0,40))}.vercel.app)</button>`}
@@ -7109,14 +7109,94 @@ function siteCard(s){
   </article>`;
 }
 function sitesGrid(list){return `<div class="hs-grid">${list.map(siteCard).join('')}</div>`}
+/* ---------- Importar site feito fora do Vendly (arquivo .html, pasta em .zip ou código colado) ---------- */
+const IMP_MIME={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',svg:'image/svg+xml',ico:'image/x-icon',avif:'image/avif',bmp:'image/bmp',woff:'font/woff',woff2:'font/woff2',ttf:'font/ttf',otf:'font/otf',eot:'application/vnd.ms-fontobject',mp4:'video/mp4',webm:'video/webm',mp3:'audio/mpeg',ogg:'audio/ogg',wav:'audio/wav',css:'text/css',js:'text/javascript',mjs:'text/javascript',json:'application/json',pdf:'application/pdf'};
+const IMP_MAX=7*1024*1024;
+async function impJSZip(){if(window.JSZip)return window.JSZip;
+  await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';s.onload=ok;s.onerror=()=>no(new Error('Não consegui abrir o .zip agora. Confira a internet e tente de novo.'));document.head.appendChild(s)});
+  return window.JSZip}
+const impExt=p=>(p.split('.').pop()||'').toLowerCase();
+function impResolve(base,rel){rel=String(rel||'').trim();if(!rel||/^(https?:|data:|blob:|mailto:|tel:|javascript:|#|\/\/)/i.test(rel))return null;
+  rel=rel.split('#')[0].split('?')[0];try{rel=decodeURIComponent(rel)}catch{}if(!rel)return null;
+  const parts=rel.startsWith('/')?[]:base.split('/').slice(0,-1);
+  for(const seg of rel.replace(/^\/+/,'').split('/')){if(seg==='..')parts.pop();else if(seg&&seg!=='.')parts.push(seg)}
+  return parts.join('/')}
+function impRelCount(html){const d=new DOMParser().parseFromString(html,'text/html');let n=0;
+  d.querySelectorAll('link[rel~="stylesheet"][href],script[src],img[src],source[src],video[src],video[poster]').forEach(el=>{const v=el.getAttribute('src')||el.getAttribute('href')||el.getAttribute('poster');if(impResolve('index.html',v))n++});return n}
+async function impFromZip(file){
+  const JSZip=await impJSZip();const zip=await JSZip.loadAsync(file);
+  const ents={};zip.forEach((p,f)=>{if(!f.dir&&!/(^|\/)(__MACOSX|\.DS_Store)/.test(p))ents[p.toLowerCase()]=f});
+  const htmls=Object.keys(ents).filter(p=>/\.html?$/.test(p));
+  if(!htmls.length)throw new Error('Não achei nenhum arquivo .html dentro do .zip.');
+  const idx=htmls.filter(p=>/(^|\/)index\.html?$/.test(p)).sort((a,b)=>a.split('/').length-b.split('/').length)[0]||htmls.sort((a,b)=>a.split('/').length-b.split('/').length)[0];
+  const get=p=>p?ents[p.toLowerCase()]:null;let missing=0,pages=0;
+  const uri=async p=>{const f=get(p);if(!f){missing++;return null}return `data:${IMP_MIME[impExt(p)]||'application/octet-stream'};base64,${await f.async('base64')}`};
+  const css=async(txt,base,depth=0)=>{
+    txt=await impRepl(txt,/@import\s+(?:url\()?\s*['"]?([^'")\s;]+)['"]?\s*\)?\s*;/g,async(m,u)=>{const p=impResolve(base,u);const f=p&&get(p);if(!f||depth>3)return m;return await css(await f.async('string'),p,depth+1)});
+    return await impRepl(txt,/url\(\s*(['"]?)([^'")]+)\1\s*\)/g,async(m,q,u)=>{const p=impResolve(base,u);if(!p)return m;const d=await uri(p);return d?`url("${d}")`:m})};
+  const doc=new DOMParser().parseFromString(await get(idx).async('string'),'text/html');
+  for(const el of [...doc.querySelectorAll('link[rel~="stylesheet"][href]')]){const p=impResolve(idx,el.getAttribute('href'));const f=p&&get(p);if(!f){if(p)missing++;continue}
+    const st=doc.createElement('style');const md=el.getAttribute('media');if(md)st.setAttribute('media',md);st.textContent=await css(await f.async('string'),p);el.replaceWith(st)}
+  for(const st of doc.querySelectorAll('style'))st.textContent=await css(st.textContent,idx);
+  for(const el of doc.querySelectorAll('[style]'))el.setAttribute('style',await css(el.getAttribute('style'),idx));
+  for(const el of [...doc.querySelectorAll('script[src]')]){const p=impResolve(idx,el.getAttribute('src'));const f=p&&get(p);if(!f){if(p)missing++;continue}
+    const s=doc.createElement('script');for(const a of el.attributes)if(!['src','defer','async','integrity','crossorigin'].includes(a.name))s.setAttribute(a.name,a.value);
+    s.textContent=(await f.async('string')).replace(/<\/script/gi,'<\\/script');
+    if(el.hasAttribute('defer')&&s.getAttribute('type')!=='module'){el.remove();doc.body.appendChild(s)}else el.replaceWith(s)}
+  for(const [sel,at] of [['img','src'],['source','src'],['video','src'],['video','poster'],['audio','src'],['input[type=image]','src'],['link[rel~="icon"]','href'],['link[rel="apple-touch-icon"]','href'],['image','href'],['use','href']]){
+    for(const el of doc.querySelectorAll(`${sel}[${at}]`)){const v=el.getAttribute(at);if(at==='href'&&sel==='use'&&v.startsWith('#'))continue;const p=impResolve(idx,v);if(!p)continue;const d=await uri(p);if(d)el.setAttribute(at,d)}}
+  for(const el of doc.querySelectorAll('img[srcset],source[srcset]')){const parts=el.getAttribute('srcset').split(',').map(x=>x.trim()).filter(Boolean);const out=[];
+    for(const part of parts){const [u,...w]=part.split(/\s+/);const p=impResolve(idx,u);const d=p?await uri(p):null;out.push([d||u,...w].join(' '))}el.setAttribute('srcset',out.join(', '))}
+  for(const a of doc.querySelectorAll('a[href]')){const p=impResolve(idx,a.getAttribute('href'));if(p&&/\.html?$/.test(p)&&p!==idx&&get(p))pages++}
+  return {html:'<!DOCTYPE html>\n'+doc.documentElement.outerHTML,missing,pages,entry:idx}}
+async function impRepl(str,rx,fn){const ms=[...str.matchAll(rx)];if(!ms.length)return str;const reps=[];for(const m of ms)reps.push(await fn(...m));let i=0;return str.replace(rx,()=>reps[i++])}
+function hsImportDialog(){
+  if(HS.missing){toast('Ative a hospedagem primeiro: rode o schema-hospedagem.sql no Supabase.','err');return}
+  const ov=openModal(`<div class="modal-head"><h2>Importar site</h2><button class="icon-btn" data-close aria-label="Fechar">${icon('x')}</button></div>
+  <form id="imp-form" class="modal-body" novalidate>
+    <p class="muted sm" style="margin:0 0 14px">Hospede aqui um site que você fez fora do Vendly (Lovable, Claude, ChatGPT, Wix exportado, código próprio…). Depois ele fica em “Meus sites”, pronto para colocar no ar, editar e conectar domínio.</p>
+    <div class="field"><label for="imp-name">Nome do site <span class="req">*</span></label><input id="imp-name" class="input" placeholder="Ex.: Clínica Sorriso Leve" autofocus></div>
+    <div class="seg" id="imp-tabs" style="margin:6px 0 14px"><button type="button" class="on" data-t="file">${icon('upload',14)}Enviar arquivo</button><button type="button" data-t="code">${icon('code',14)}Colar código</button></div>
+    <div id="imp-file-box"><label class="drop" for="imp-file" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px;border:1.5px dashed var(--border);border-radius:14px;cursor:pointer;text-align:center">
+      <div class="drop-ic">${icon('upload',22)}</div><b id="imp-file-lbl">Escolher arquivo .html ou .zip</b><span class="muted sm">Site com várias pastas (imagens, css, js)? Compacte a pasta inteira em <b>.zip</b> e envie.</span>
+      <input type="file" id="imp-file" accept=".html,.htm,.zip,text/html,application/zip,application/x-zip-compressed" hidden></label></div>
+    <div id="imp-code-box" hidden><textarea id="imp-code" class="input" rows="8" placeholder="Cole aqui o código HTML completo do site (de &lt;!DOCTYPE html&gt; até &lt;/html&gt;)" style="font:12px/1.5 ui-monospace,monospace;min-height:170px"></textarea></div>
+    <p class="hint" id="imp-hint"></p>
+  </form>
+  <div class="modal-foot"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" form="imp-form" type="submit" id="imp-go">${icon('upload',16)}Importar site</button></div>`,{size:'md'});
+  let tab='file',file=null;const hint=$('#imp-hint',ov),nm=$('#imp-name',ov);
+  $('#imp-tabs',ov).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.t;$$('#imp-tabs button',ov).forEach(x=>x.classList.toggle('on',x===b));$('#imp-file-box',ov).hidden=tab!=='file';$('#imp-code-box',ov).hidden=tab!=='code';hint.textContent='';hint.className='hint'});
+  $('#imp-file',ov).addEventListener('change',e=>{file=e.target.files&&e.target.files[0]||null;$('#imp-file-lbl',ov).textContent=file?`${file.name} · ${fmtBytes(file.size)}`:'Escolher arquivo .html ou .zip';
+    if(file&&!nm.value.trim())nm.value=file.name.replace(/\.(html?|zip)$/i,'').replace(/[-_]+/g,' ').replace(/\bindex\b/i,'').trim();hint.textContent='';hint.className='hint'});
+  ov.querySelector('#imp-form').addEventListener('submit',async e=>{e.preventDefault();const btn=$('#imp-go',ov);
+    const name=nm.value.trim();if(!name){hint.textContent='Dê um nome para o site.';hint.className='hint err';nm.focus();return}
+    btn.disabled=true;btn.innerHTML='<span class="spin"></span>Importando…';hint.textContent='';hint.className='hint';
+    try{let html='',info={missing:0,pages:0};
+      if(tab==='code'){html=$('#imp-code',ov).value.trim();if(!html)throw new Error('Cole o código do site.')}
+      else{if(!file)throw new Error('Escolha o arquivo do site.');
+        if(/\.zip$/i.test(file.name)||/zip/.test(file.type)){info=await impFromZip(file);html=info.html}
+        else if(/\.html?$/i.test(file.name)||/html/.test(file.type))html=await file.text();
+        else throw new Error('Envie um arquivo .html ou .zip.')}
+      if(!/<(html|body|div|section|main|h1|p)\b/i.test(html))throw new Error('Isso não parece o código de um site (HTML).');
+      if(!/<!doctype/i.test(html.slice(0,200)))html='<!DOCTYPE html>\n'+html;
+      if(html.length>IMP_MAX)throw new Error(`O site ficou com ${fmtBytes(html.length)}, acima do limite de ${fmtBytes(IMP_MAX)}. Diminua o tamanho das imagens e vídeos e tente de novo.`);
+      const rel=tab==='file'&&!/\.zip$/i.test(file&&file.name||'')?impRelCount(html):0;
+      const id=nid('st');const s={id,name,niche:'outro',leadId:'',brief:{...emptyBrief('outro'),name,kind:'site',imported:true},html,mode:'import',createdAt:Date.now(),editedAt:Date.now(),versions:[]};
+      const ok=await Store.put('sites',s);if(ok===false)throw new Error('Não consegui salvar o site. Confira a internet.');
+      closeModal(ov,true);render();
+      const warn=[info.missing?`${info.missing} arquivo(s) citados no site não estavam no .zip`:'',rel?`${rel} arquivo(s) (imagens, css ou js) ficaram fora — envie a pasta inteira em .zip`:'',info.pages?`só a página principal foi importada (${info.pages} link(s) para outras páginas não vão abrir)`:''].filter(Boolean);
+      toast(warn.length?`Site importado. Atenção: ${warn.join('; ')}.`:'Site importado. Agora é só escolher o link e publicar.',warn.length?'err':undefined);
+      setTimeout(()=>hsPublishDialog(S.sites.find(x=>x.id===id)||s),warn.length?900:250);
+    }catch(err){hint.textContent=String(err.message||err);hint.className='hint err';btn.disabled=false;btn.innerHTML=`${icon('upload',16)}Importar site`}});
+}
 function pageHosting(){
   if(!HS.loaded&&!HS.loading)hsLoad().then(()=>{if(S.route.page==='hospedagem'||S.route.page==='agente')render()});
   const sites=[...S.sites].sort((a,c)=>(c.editedAt||c.createdAt||0)-(a.editedAt||a.createdAt||0));
   const pubs=sites.filter(pubOf);const views=Object.values(HS.pubs).reduce((a,p)=>a+(+p.views||0),0);
-  const head=`<section class="page-head"><div><h1 class="h1">Hospedagem</h1><p class="sub">Coloque no ar os sites criados no Vendly, com link próprio ou com o domínio do cliente.</p></div>
-    <button class="btn btn-primary" data-act="nav" data-page="agente">${icon('sparkle',16)}Criar novo site</button></section>`;
+  const head=`<section class="page-head"><div><h1 class="h1">Hospedagem</h1><p class="sub">Coloque no ar os sites criados no Vendly ou importados de fora, com link próprio ou com o domínio do cliente.</p></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" data-act="hs-import">${icon('upload',16)}Importar site</button><button class="btn btn-primary" data-act="nav" data-page="agente">${icon('sparkle',16)}Criar novo site</button></div></section>`;
   const setup=HS.missing?`<div class="card hs-setup"><div class="hs-setup-ic">${icon('alert',20)}</div><div><b>Falta ativar a hospedagem no Supabase</b><p class="muted sm">Rode o arquivo <b>schema-hospedagem.sql</b> no Supabase (SQL Editor → New query → cole → Run). Depois atualize esta página.</p></div></div>`:'';
-  if(!sites.length)return head+setup+emptyBlock('Nenhum site salvo ainda','Todo site que você cria em Criar site fica guardado aqui, pronto para editar e colocar no ar.','Criar site','hs-go-agent','sparkle');
+  if(!sites.length)return head+setup+emptyBlock('Nenhum site salvo ainda','Todo site que você cria em Criar site fica guardado aqui, pronto para editar e colocar no ar. Fez um site fora do Vendly? Toque em “Importar site”.','Criar site','hs-go-agent','sparkle');
   return head+setup+`<section class="hs-stats">
     <div class="card hs-stat"><span>Sites no ar</span><b>${pubs.length}</b><small class="muted">de ${sites.length} ${sites.length===1?'site salvo':'sites salvos'}</small></div>
     <div class="card hs-stat"><span>Visitas</span><b>${fmtInt(views)}</b><small class="muted">somando todos os sites</small></div>
@@ -7417,6 +7497,7 @@ async function onSiteAct(el){
     case 'hs-unpublish':if(s)hsUnpublish(s);break;
     case 'hs-domain':if(s)hsDomainDialog(s);break;
     case 'hs-go-agent':AG.tab='criar';go('agente');break;
+    case 'hs-import':hsImportDialog();break;
     case 'hs-copy':{const p=s&&pubOf(s);if(!p)break;const u=p.short_host?'https://'+p.short_host:siteURL(p.slug);try{await navigator.clipboard.writeText(u);toast('Link copiado.')}catch{toast(u)}break}
     case 'hs-short':if(s)hsShort(s,el);break;
   }
